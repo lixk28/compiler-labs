@@ -4,7 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-typedef enum token_type_t
+typedef enum token_type_t token_type_t;
+enum token_type_t
 {
   T_EOF,
 
@@ -26,7 +27,10 @@ typedef enum token_type_t
   OP_MUL,
   OP_DIV,
   // OP_MOD,
-
+  
+  OP_NOT,
+  OP_LOGAND,
+  OP_LOGOR,
   OP_EQUAL,
   OP_NEQ,
   OP_LEQ,
@@ -44,20 +48,23 @@ typedef enum token_type_t
 
   K_INT,
   K_CHAR,
-  // K_FLOAT,
-  // K_DOUBLE,
+  K_FLOAT,
+  K_DOUBLE,
   // K_BOOL,
   // K_TRUE,
   // K_FALSE,
   K_VOID,
-} token_type_t;
+};
 
-typedef struct token_t
+typedef struct token_t token_t;
+struct token_t
 {  
   char *loc;
   size_t len;
-  token_type_t token_type;
-} token_t;
+  token_type_t type;
+
+  token_t *next;  // tokens are stored as a single linked list
+};
 
 token_t *make_token(char *start, char *end, token_type_t type);
 
