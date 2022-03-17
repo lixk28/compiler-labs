@@ -4,42 +4,40 @@
 #include "token.h"
 #include "kric.h"
 
-#include <ctype.h>    // for isalpha() and isdigit()
+#include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>   // for strcmp() and strncmp()
-#include <stdbool.h>  // for bool
+#include <string.h>
+#include <stdbool.h>
 
-#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
+#define NEXT_CHAR(LEXER) (LEXER)->p++
+#define NEXT_NCHAR(LEXER, N) (LEXER)->p += (N)
 
+// FIXME:
+// currently we have two problems with lexer:
+// * we use a single buffer to store the entire source code, a better way is to 
+//   set fixed size buffer like 4096, which is the block size
+// * we can only read and compile one single file, no multiple files support
 typedef struct lexer_t
 {
   char *buf;
+  char *p;
   size_t src_size;
-  char c;
-  size_t i;
 } lexer_t;
 
-// read the source code and put it in a buffer
 char *read_src(const char *file_path);
 
 lexer_t *init_lexer(const char *file_path);
 
 void destroy_lexer(lexer_t *lexer);
 
-// move to the next character and return it
-char next_char(lexer_t *lexer);
-
-// peek a char
-char peek_char(lexer_t *lexer, size_t offset);
-
-// char roll_back(lexer_t *lexer);
-
 // skip whitespace, newline, return and tab
 void skip_char(lexer_t *lexer);
 
 // skip comments, including inline comments and block comments
 void skip_comment(lexer_t *lexer);
+
+void scan(lexer_t *lexer);
 
 #endif

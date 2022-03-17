@@ -53,12 +53,13 @@ typedef enum token_type_t
 } token_type_t;
 
 typedef struct token_t
-{
-  char *token_value;
+{  
+  char *loc;
+  size_t len;
   token_type_t token_type;
 } token_t;
 
-token_t *init_token(char *value, token_type_t type);
+token_t *make_token(char *start, char *end, token_type_t type);
 
 void destroy_token(token_t *token);
 

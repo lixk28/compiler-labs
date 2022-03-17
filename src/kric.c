@@ -6,4 +6,8 @@
 void kric_compile(const char *file_path)
 {
   lexer_t *lexer = init_lexer(file_path);
+
+  scan(lexer);
+
+  destroy_lexer(lexer);
 }
