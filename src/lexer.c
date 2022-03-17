@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include <ctype.h>
 #include <stdio.h>
 
 char *read_src(const char *file_path)
@@ -83,8 +84,11 @@ void skip_comment(lexer_t *lexer)
   }
 }
 
-void scan(lexer_t *lexer)
+token_t *lex(lexer_t *lexer)
 {
+  token_t head = {};
+  token_t *curr = &head;
+
   while (*(lexer->p) != '\0')
   {
     skip_char(lexer);
@@ -93,10 +97,16 @@ void scan(lexer_t *lexer)
     // TODO: parse id, numbers, char, string literal, keywords, operators
     
     // numeric literals
+    if (isdigit(CURR_CHAR(lexer)) || (CURR_CHAR(lexer) == '.' && isdigit(PEEK_CHAR(lexer, 1))))
+    {
+      
+    }
 
     // character literal
 
     // string literal
   }
+
+  return head.next;
 }
 

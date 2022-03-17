@@ -11,6 +11,10 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define loop for(;;)
+
+#define CURR_CHAR(LEXER) *((LEXER)->p)
+#define PEEK_CHAR(LEXER, N) *((LEXER)->p + (N))
 #define NEXT_CHAR(LEXER) (LEXER)->p++
 #define NEXT_NCHAR(LEXER, N) (LEXER)->p += (N)
 
@@ -26,6 +30,7 @@ typedef struct lexer_t
   size_t src_size;
 } lexer_t;
 
+// FIXME: these functions should be declared as static in token.c except tokenize()
 char *read_src(const char *file_path);
 
 lexer_t *init_lexer(const char *file_path);
@@ -38,6 +43,6 @@ void skip_char(lexer_t *lexer);
 // skip comments, including inline comments and block comments
 void skip_comment(lexer_t *lexer);
 
-void scan(lexer_t *lexer);
+token_t *lex(lexer_t *lexer);
 
 #endif
