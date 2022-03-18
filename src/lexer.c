@@ -110,6 +110,37 @@ static bool is_keyword(token_t *token)
   return false;
 }
 
+static int is_delimiter(char *p)
+{
+  // delimiters with one character
+  static char delimiters_1[] =
+  {
+    '(', ')', '[', ']', '{', '}', ':', ';', ',', '.',
+    '?', '!', '<', '>', '=',
+    '+', '-', '*', '/', '%',
+    '~', '&', '|'
+  };
+
+  // delimiters with multiple characters
+  static char *delimiters_2[] =
+  {
+    "==", "!=", "<=", ">=", "->",
+    "+=", "-=", "*=", "/=", "%=",
+    "&&", "||",
+    "++", "--",
+    "&=", "|=", "^=", "<<", ">>", "<<=", ">>="
+  };
+
+  for (size_t i = 0; i < sizeof(delimiters_2) / sizeof(*delimiters_2); i++)
+    if (start_with(p, delimiters_2[i]))
+      return strlen(delimiters_2[i]);
+
+  for (size_t i = 0; i < sizeof(delimiters_1) / sizeof(*delimiters_1); i++)
+    if (*p == delimiters_1[i])
+      return 1;
+  return 0;
+}
+
 token_t *lex(lexer_t *lexer)
 {
   token_t head = {};
@@ -214,6 +245,19 @@ token_t *lex(lexer_t *lexer)
       NEXT_NCHAR(lexer, curr->len);
       continue;
     }
+
+    // delimiters
+    int delim_len = is_delimiter(lexer->p);
+    if (delim_len > 0)
+    {
+      curr->next = make_token(lexer->p, lexer->p + delim_len - 1, T_DELIMITER);
+      curr = curr->next;
+      NEXT_NCHAR(lexer, curr->len);
+      continue;
+    }
+
+    fprintf(stderr, "oh shoot, invalid token!");
+    exit(1);
   }
 
   return head.next;

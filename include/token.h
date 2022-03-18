@@ -2,7 +2,6 @@
 #define TOKEN_H
 
 #include <string.h>
-#include <stdlib.h>
 #include <stdint.h>
 
 typedef enum token_type_t token_type_t;
@@ -39,6 +38,8 @@ struct token_t
 };
 
 token_t *make_token(char *start, char *end, token_type_t type);
+
+void print_token_list(token_t *head);
 
 void destroy_token(token_t *token);
 
