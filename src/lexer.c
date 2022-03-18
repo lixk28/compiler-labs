@@ -168,7 +168,7 @@ token_t *lex(lexer_t *lexer)
         else
           break;
       }
-      curr->next = make_token(q, lexer->p, T_NUM);
+      curr->next = make_token(q, lexer->p - 1, T_NUM);
       curr = curr->next;
       continue;
     }
@@ -242,7 +242,6 @@ token_t *lex(lexer_t *lexer)
       if (is_keyword(curr->next))
         curr->next->type = T_KEYWORD;
       curr = curr->next;
-      NEXT_NCHAR(lexer, curr->len);
       continue;
     }
 
