@@ -69,14 +69,14 @@ void skip_char(lexer_t *lexer)
 
 void skip_comment(lexer_t *lexer)
 {
-  if (start_with(lexer->buf, "//")) // skip inline comment
+  if (start_with(lexer->p, "//")) // skip inline comment
   {
     NEXT_NCHAR(lexer, 2);
     while (*(lexer->p) != '\n')
       NEXT_CHAR(lexer);
   }
 
-  if (start_with(lexer->buf, "/*")) // skip block comment
+  if (start_with(lexer->p, "/*")) // skip block comment
   {
     NEXT_NCHAR(lexer, 2);
     char *q = strstr(lexer->p, "*/");
@@ -150,6 +150,7 @@ token_t *lex(lexer_t *lexer)
   {
     skip_char(lexer);
     skip_comment(lexer);
+    skip_char(lexer);
     
     // numeric literals
     // ENHANCE:
