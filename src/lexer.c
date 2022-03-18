@@ -1,6 +1,9 @@
 #include "lexer.h"
+#include "token.h"
 #include <ctype.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
 
 char *read_src(const char *file_path)
 {
@@ -93,18 +96,77 @@ token_t *lex(lexer_t *lexer)
   {
     skip_char(lexer);
     skip_comment(lexer);
-
-    // TODO: parse id, numbers, char, string literal, keywords, operators
     
     // numeric literals
+    // ENHANCE:
+    // read and convert binary, octal and hexadecimal number
+    // currently we only read and convert decimal number
     if (isdigit(CURR_CHAR(lexer)) || (CURR_CHAR(lexer) == '.' && isdigit(PEEK_CHAR(lexer, 1))))
     {
-      
+      char *q = NEXT_CHAR(lexer);
+      loop
+      {
+        if (isalnum(CURR_CHAR(lexer)) || CURR_CHAR(lexer) == '.')
+          NEXT_CHAR(lexer);
+        else if (CURR_CHAR(lexer) && PEEK_CHAR(lexer, 1) && \
+                 strchr("eE", CURR_CHAR(lexer)) && strchr("+-", PEEK_CHAR(lexer, 1)))
+          NEXT_NCHAR(lexer, 2);
+        else
+          break;
+      }
+      curr->next = make_token(q, lexer->p, T_NUM);
+      curr = curr->next;
+      continue;
     }
 
     // character literal
+    if (CURR_CHAR(lexer) == '\'')
+    {
+      if (PEEK_CHAR(lexer, 1) == '\0') // unclosed char literal
+      {
+        // TODO: raise an error here
+      }
+
+      // ENHANCE:
+      // escape character and utf-8 support
+      char c = PEEK_CHAR(lexer, 1);
+
+      char *q = strchr(lexer->p + 1, '\'');
+      if (!q) // unclosed char literal
+      {
+        // TODO: raise an error here
+      }
+
+      curr->next = make_token(lexer->p, q, T_CHAR_LITERAL);
+      curr->next->cval = c;
+      curr = curr->next;
+      NEXT_NCHAR(lexer, curr->len);
+      continue;
+    }
 
     // string literal
+    if (CURR_CHAR(lexer) == '"')
+    {
+      if (PEEK_CHAR(lexer, 1) == '\0')  // unclosed string literal
+      {
+        // TODO: raise an error here
+      }
+
+      // ENHANCE:
+      // * escape character and utf-8 support
+      // * ignore single '\'
+
+      char *q = strchr(lexer->p + 1, '"');
+      if (!q) // unclosed string literal
+      {
+        // TODO: raise an error here
+      }
+
+      curr->next = make_token(lexer->p, q, T_STR_LITERAL);
+      curr = curr->next;
+      NEXT_NCHAR(lexer, curr->len);
+      continue;
+    }
   }
 
   return head.next;
