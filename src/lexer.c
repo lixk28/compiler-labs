@@ -87,6 +87,25 @@ void skip_comment(lexer_t *lexer)
   }
 }
 
+static bool iskeyword(token_t *token)
+{
+  // ENHANCE:
+  // * support more keywords :^)
+  static char *keyword_list[] =
+  {
+    "if", "else", "do", "while", "goto", "continue", "break",
+    "for", "return", "switch", "case", "default",
+    "short", "int", "long", "char", "float", "double", "void"
+  };
+
+  for (size_t i = 0; i < sizeof(keyword_list) / sizeof(*keyword_list); i++)
+  {
+    if (!memcmp(keyword_list[i], token->loc, strlen(keyword_list[i])))
+      return true;
+  }
+  return false;
+}
+
 token_t *lex(lexer_t *lexer)
 {
   token_t head = {};
@@ -165,6 +184,27 @@ token_t *lex(lexer_t *lexer)
       curr->next = make_token(lexer->p, q, T_STR_LITERAL);
       curr = curr->next;
       NEXT_NCHAR(lexer, curr->len);
+      continue;
+    }
+
+    // identifiers or keywords
+    // letter_ -> [A-Za-z_]
+    // numbers -> [0-9]
+    // id -> letter_ (letter_ | numbers)*
+    // FIXME: specify keywords not implemented
+    if (isalpha(CURR_CHAR(lexer)) || CURR_CHAR(lexer) == '_')
+    {
+      char *q = lexer->p;
+      loop
+      {
+        NEXT_CHAR(lexer);
+        if (isalnum(CURR_CHAR(lexer)) || CURR_CHAR(lexer) == '_')
+          continue;
+        else
+          break;
+      }
+      curr->next = make_token(q, lexer->p - 1, T_ID);
+      curr = curr->next;
       continue;
     }
   }
