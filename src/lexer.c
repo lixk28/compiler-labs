@@ -156,7 +156,7 @@ token_t *lex(lexer_t *lexer)
         // TODO: raise an error here
       }
 
-      curr->next = make_token(lexer->p, q, T_CHAR_LITERAL);
+      curr->next = make_token(lexer->p, q, T_CHAR);
       curr->next->cval = c;
       curr = curr->next;
       NEXT_NCHAR(lexer, curr->len);
@@ -181,7 +181,7 @@ token_t *lex(lexer_t *lexer)
         // TODO: raise an error here
       }
 
-      curr->next = make_token(lexer->p, q, T_STR_LITERAL);
+      curr->next = make_token(lexer->p, q, T_STR);
       curr = curr->next;
       NEXT_NCHAR(lexer, curr->len);
       continue;
@@ -204,7 +204,10 @@ token_t *lex(lexer_t *lexer)
           break;
       }
       curr->next = make_token(q, lexer->p - 1, T_ID);
+      if (iskeyword(curr->next))
+        curr->next->type = T_KEYWORD;
       curr = curr->next;
+      NEXT_NCHAR(lexer, curr->len);
       continue;
     }
   }
