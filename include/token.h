@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 typedef enum token_type_t token_type_t;
 enum token_type_t
@@ -10,6 +11,10 @@ enum token_type_t
   T_EOF,
 
   T_ID,
+
+  T_NUM,
+  T_CHAR_LITERAL,
+  T_STR_LITERAL,
 
   T_LPAREN,
   T_RPAREN,
@@ -62,6 +67,15 @@ struct token_t
   char *loc;
   size_t len;
   token_type_t type;
+
+  union // if type is T_NUM, it stores the value
+  {
+    int64_t ival;
+    long double fval;
+  };
+
+  char cval;  // if type is T_CHAR_LITERAL, it stores the character
+  char *sval; // if type is T_STR_LITERAL, it stores the string with null terminated
 
   token_t *next;  // tokens are stored as a single linked list
 };
