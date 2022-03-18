@@ -1,8 +1,10 @@
 #include "lexer.h"
 #include "token.h"
 #include <ctype.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 char *read_src(const char *file_path)
@@ -87,20 +89,22 @@ void skip_comment(lexer_t *lexer)
   }
 }
 
-static bool iskeyword(token_t *token)
+static bool is_keyword(token_t *token)
 {
   // ENHANCE:
   // * support more keywords :^)
   static char *keyword_list[] =
   {
-    "if", "else", "do", "while", "goto", "continue", "break",
-    "for", "return", "switch", "case", "default",
-    "short", "int", "long", "char", "float", "double", "void"
+    "if", "else", "do", "while", "goto", "continue", "break", "for",
+    "switch", "case", "default", "return", "void", "struct", "enum",
+    "singed", "unsigned", "short", "int", "long", "char", "float", "double",
+    "const", "typedef", "sizeof", "typeof"
   };
 
   for (size_t i = 0; i < sizeof(keyword_list) / sizeof(*keyword_list); i++)
   {
-    if (!memcmp(keyword_list[i], token->loc, strlen(keyword_list[i])))
+    if (strlen(keyword_list[i]) == token->len && \
+        !memcmp(keyword_list[i], token->loc, strlen(keyword_list[i])))
       return true;
   }
   return false;
@@ -204,7 +208,7 @@ token_t *lex(lexer_t *lexer)
           break;
       }
       curr->next = make_token(q, lexer->p - 1, T_ID);
-      if (iskeyword(curr->next))
+      if (is_keyword(curr->next))
         curr->next->type = T_KEYWORD;
       curr = curr->next;
       NEXT_NCHAR(lexer, curr->len);
