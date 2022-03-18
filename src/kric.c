@@ -13,4 +13,5 @@ void kric_compile(const char *file_path)
   print_token_list(tokens);
 
   destroy_lexer(lexer);
+  destroy_token(tokens);
 }

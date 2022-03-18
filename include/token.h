@@ -41,6 +41,6 @@ token_t *make_token(char *start, char *end, token_type_t type);
 
 void print_token_list(token_t *head);
 
-void destroy_token(token_t *token);
+void destroy_token(token_t *head);
 
 #endif

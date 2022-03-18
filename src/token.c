@@ -33,7 +33,12 @@ void print_token_list(token_t *head)
   }
 }
 
-void destroy_token(token_t *token)
+void destroy_token(token_t *head)
 {
-  free(token);
+  while (head)
+  {
+    token_t *temp = head;
+    head = head->next;
+    free(temp);
+  }
 }
