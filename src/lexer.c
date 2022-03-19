@@ -19,18 +19,14 @@ static char *read_src(const char *file_path)
   fseek(src_file, 0L, SEEK_END);
   size_t file_size = ftell(src_file);
   fseek(src_file, 0L, SEEK_SET);
-  #ifdef DEBUG
-    printf("source file size is %d\n", file_size);
-  #endif
+
+  dbgln("source file size is %d\n", file_size);
 
   char *buf = calloc(file_size + 1, sizeof(char));
   fread(buf, sizeof(char), file_size, src_file);
   strcat(buf, "\0");
-  #ifdef DEBUG
-    printf("length of buffer: %d\n", strlen(buf));
-    printf("source code:\n");
-    printf("%s\n", buf);
-  #endif
+
+  dbgln("length of buffer is %d\n", strlen(buf));
 
   fclose(src_file);
 
