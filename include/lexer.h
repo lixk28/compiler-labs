@@ -30,18 +30,9 @@ typedef struct lexer_t
   size_t src_size;
 } lexer_t;
 
-// FIXME: these functions should be declared as static in token.c except tokenize()
-char *read_src(const char *file_path);
-
 lexer_t *init_lexer(const char *file_path);
 
 void destroy_lexer(lexer_t *lexer);
-
-// skip whitespace, newline, return and tab
-void skip_char(lexer_t *lexer);
-
-// skip comments, including inline comments and block comments
-void skip_comment(lexer_t *lexer);
 
 token_t *lex(lexer_t *lexer);
 

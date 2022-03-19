@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *read_src(const char *file_path)
+static char *read_src(const char *file_path)
 {
   FILE *src_file = fopen(file_path, "r");
   if (src_file == NULL)
@@ -58,35 +58,6 @@ void destroy_lexer(lexer_t *lexer)
 static bool start_with(char *buf, const char *prefix)
 {
   return strncmp(buf, prefix, strlen(prefix)) == 0 ? true : false;
-}
-
-void skip_char(lexer_t *lexer)
-{
-  // ignore these characters
-  while (*(lexer->p) == '\n' || *(lexer->p) == '\r' || *(lexer->p) == ' ' || *(lexer->p) == '\t')
-    NEXT_CHAR(lexer);
-}
-
-void skip_comment(lexer_t *lexer)
-{
-  if (start_with(lexer->p, "//")) // skip inline comment
-  {
-    NEXT_NCHAR(lexer, 2);
-    while (*(lexer->p) != '\n')
-      NEXT_CHAR(lexer);
-  }
-
-  if (start_with(lexer->p, "/*")) // skip block comment
-  {
-    NEXT_NCHAR(lexer, 2);
-    char *q = strstr(lexer->p, "*/");
-    if (!q) // unclosed block comment
-    {
-      // TODO: raise an error here
-    }
-    lexer->p = q;
-    NEXT_NCHAR(lexer, 2);
-  }
 }
 
 static bool is_keyword(token_t *token)
@@ -148,9 +119,30 @@ token_t *lex(lexer_t *lexer)
 
   while (*(lexer->p) != '\0')
   {
-    skip_char(lexer);
-    skip_comment(lexer);
-    skip_char(lexer);
+    // skip whitespaces, line feeds, carraige returns, tabs
+    while (*(lexer->p) == '\n' || *(lexer->p) == '\r' || *(lexer->p) == ' ' || *(lexer->p) == '\t')
+      NEXT_CHAR(lexer);
+
+    if (start_with(lexer->p, "//")) // skip inline comment
+    {
+      NEXT_NCHAR(lexer, 2);
+      while (*(lexer->p) != '\n')
+        NEXT_CHAR(lexer);
+      continue;
+    }
+
+    if (start_with(lexer->p, "/*")) // skip block comment
+    {
+      NEXT_NCHAR(lexer, 2);
+      char *q = strstr(lexer->p, "*/");
+      if (!q) // unclosed block comment
+      {
+        // TODO: raise an error here
+      }
+      lexer->p = q;
+      NEXT_NCHAR(lexer, 2);
+      continue;
+    }
     
     // numeric literals
     // ENHANCE:
