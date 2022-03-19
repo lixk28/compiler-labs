@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "error.h"
 #include "token.h"
 #include <ctype.h>
 #include <stddef.h>
@@ -129,17 +130,15 @@ token_t *lex(lexer_t *lexer)
 
     if (start_with(lexer->p, "/*")) // skip block comment
     {
-      NEXT_NCHAR(lexer, 2);
-      char *q = strstr(lexer->p, "*/");
+      char *q = strstr(lexer->p + 2, "*/");
       if (!q) // unclosed block comment
       {
-        // TODO: raise an error here
+        error_at(lexer->buf, lexer->p, "unterminated comment");
       }
-      lexer->p = q;
-      NEXT_NCHAR(lexer, 2);
+      lexer->p = q + 2;
       continue;
     }
-    
+
     // numeric literals
     // ENHANCE:
     // read and convert binary, octal and hexadecimal number
@@ -167,7 +166,7 @@ token_t *lex(lexer_t *lexer)
     {
       if (PEEK_CHAR(lexer, 1) == '\0') // unclosed char literal
       {
-        // TODO: raise an error here
+        error_at(lexer->buf, lexer->p, "missing terminating ' character");
       }
 
       // ENHANCE:
@@ -177,7 +176,7 @@ token_t *lex(lexer_t *lexer)
       char *q = strchr(lexer->p + 1, '\'');
       if (!q) // unclosed char literal
       {
-        // TODO: raise an error here
+        error_at(lexer->buf, lexer->p, "missing terminating ' character");
       }
 
       curr->next = make_token(lexer->p, q, T_CHAR);
@@ -192,7 +191,7 @@ token_t *lex(lexer_t *lexer)
     {
       if (PEEK_CHAR(lexer, 1) == '\0')  // unclosed string literal
       {
-        // TODO: raise an error here
+        error_at(lexer->buf, lexer->p, "missing terminating \" character");
       }
 
       // ENHANCE:
@@ -202,7 +201,7 @@ token_t *lex(lexer_t *lexer)
       char *q = strchr(lexer->p + 1, '"');
       if (!q) // unclosed string literal
       {
-        // TODO: raise an error here
+        error_at(lexer->buf, lexer->p, "missing terminating \" character");
       }
 
       curr->next = make_token(lexer->p, q, T_STR);
