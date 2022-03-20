@@ -214,7 +214,6 @@ token_t *lex(lexer_t *lexer)
     // letter_ -> [A-Za-z_]
     // numbers -> [0-9]
     // id -> letter_ (letter_ | numbers)*
-    // FIXME: specify keywords not implemented
     if (isalpha(CURR_CHAR(lexer)) || CURR_CHAR(lexer) == '_')
     {
       char *q = lexer->p;

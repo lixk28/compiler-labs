@@ -1,7 +1,7 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#include <string.h>
+#include <stddef.h>
 #include <stdint.h>
 
 typedef enum token_type_t token_type_t;

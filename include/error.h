@@ -1,10 +1,7 @@
 #ifndef ERROR_H
 #define ERROR_H
 
-#include <stdio.h>
 #include <stdarg.h>
-#include <stdlib.h>
-#include <stdnoreturn.h>
 
 // taken from https://stackoverflow.com/questions/3219393/stdlib-and-colored-output-in-c
 // reference https://en.wikipedia.org/wiki/ANSI_escape_code

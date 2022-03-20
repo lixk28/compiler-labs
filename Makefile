@@ -17,7 +17,7 @@ LDFLAGS  :=
 
 TARGET := $(BIN_DIR)/kric
 
-.PHONY: all debug
+.PHONY: all
 all: $(TARGET)
 	@$(info [$(PROJECT_NAME)] build done)
 

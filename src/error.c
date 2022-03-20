@@ -1,6 +1,7 @@
 #include "error.h"
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void error_at(char *buf, char *loc, const char *fmt, ...)
 {
