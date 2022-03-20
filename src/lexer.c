@@ -117,8 +117,11 @@ token_t *lex(lexer_t *lexer)
   while (*(lexer->p) != '\0')
   {
     // skip whitespaces, line feeds, carraige returns, tabs
-    while (*(lexer->p) == '\n' || *(lexer->p) == '\r' || *(lexer->p) == ' ' || *(lexer->p) == '\t')
+    if (*(lexer->p) == '\n' || *(lexer->p) == '\r' || *(lexer->p) == ' ' || *(lexer->p) == '\t')
+    {
       NEXT_CHAR(lexer);
+      continue;
+    }
 
     if (start_with(lexer->p, "//")) // skip inline comment
     {
@@ -242,7 +245,7 @@ token_t *lex(lexer_t *lexer)
       continue;
     }
 
-    fprintf(stderr, "oh shoot, invalid token!");
+    fprintf(stderr, "oh shoot, an invalid token!\n");
     exit(1);
   }
 
