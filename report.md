@@ -327,11 +327,169 @@ Lab1:
 
 - 完整提交历史: https://github.com/lixk28/kric/commits/lab1
 
-Lab1 PPT 中给出的 demo 在 `demo/lab1_test.c` 中，我自己给出的测试 demo 在 `demo/demo.c`。
+Lab1 PPT 中给出的 demo 在 `demo/lab1_test.c` 中，我自己给出的测试 demo 在 `demo/demo.c`。`tokens.txt` 是对 `demo.c` 进行词法分析生成的结果，格式为 `token type`，每行是一个 token 和它对应的类型。由于结果太长就不贴在这里。
 
-`tokens.txt` 是对 `demo.c` 进行词法分析生成的结果，格式为 `token type`，每行是一个 token 和它对应的类型。
+用于测试的 `demo.c` 的内容：
 
-另外，kric 目前有个我自以为不错的 feature，kric 可以在 lex 阶段，识别出某些位置的错误，kric 会直接 exit，这不仅对用户友好，而且可以为用户节省宝贵的时间和电费，为环保作出贡献。报错信息的格式模仿的是 gcc，给出错误位置的行、列数，错误提示信息，以及出错的那一行代码。这部分的实现在 `include/error.h` 和 `src/error.c`。
+```C
+// cover as many lexemes as possible
+
+typedef enum my_enum
+{
+  A, B, C, D, E
+} my_enum;
+
+typedef struct my_struct
+{
+  int val;
+  struct my_struct *next;
+} my_struct;
+
+my_struct *who_is_the_next(my_struct *a_struct)
+{
+  if (a_struct)
+    return a_struct->next;
+  return ((void*)0);  // which is NULL, because NULL is not a keyword actually
+}
+
+int main(int argc, char *argv[])
+{
+  /*
+    this is a block comment
+    I am comment :-)
+  */
+
+  // this is an inline comment
+
+  float f1 = 3.14f;
+  double f2 = 1e-5;
+
+  int a = 2;
+  int b = 1;
+  int c, d;
+  int _true = 1, _false = 0;
+
+  if (_true && _false)   // and this is another inline comment
+  {
+    c = a + b;
+    d = a * b;
+  }
+  else if (_true || _false)
+  {
+    c = a - b;
+    d = a / b;
+  }
+  else
+  {
+    c = a & b;
+    d = a | b;
+  }
+
+  // and this is an indentifier
+  char i_am_id = 'c';
+  char *yet_another_id = "well, hello lexer :^)";
+
+  // sum of 0 to 10
+  int i = 10;
+  int sum = 0;
+  while (i >= 0)
+  {
+    sum += i;
+    i--;
+  }
+
+  // sum of 1 to 50
+  sum = 0;
+  for (int i = 1; i <= 50; i++)
+  {
+    sum += i;
+  }
+
+  my_struct a_struct;
+  my_struct *the_next = who_is_the_next(&a_struct);
+  int the_val = a_struct.val;
+
+  return 0;
+}
+
+```
+
+kric 支持的关键字：
+
+```C
+static char *keyword_list[] =
+{
+  "if", "else", "do", "while", "goto", "continue", "break", "for",
+  "switch", "case", "default", "return", "void", "struct", "enum",
+  "singed", "unsigned", "short", "int", "long", "char", "float", "double",
+  "const", "typedef", "sizeof", "typeof"
+};
+```
+
+kric 支持的分隔符：
+
+```C
+// delimiters with one character
+static char delimiters_1[] =
+{
+  '(', ')', '[', ']', '{', '}', ':', ';', ',', '.',
+  '?', '!', '<', '>', '=',
+  '+', '-', '*', '/', '%',
+  '~', '&', '|'
+};
+
+// delimiters with multiple characters
+static char *delimiters_2[] =
+{
+  "==", "!=", "<=", ">=", "->",
+  "+=", "-=", "*=", "/=", "%=",
+  "&&", "||",
+  "++", "--",
+  "&=", "|=", "^=", "<<", ">>", "<<=", ">>="
+};
+```
+
+kric 支持数值类型常量包括整型和浮点型，以及字符、字符串字面量。
+
+- 数值类型的正规式 (报错处理不完善，正在开发)
+  $$
+  digit \rightarrow [0-9] \\
+  digits \rightarrow digit \ digit^* \\
+  fraction \rightarrow \ . digits \ | \ \epsilon \\
+  exponent \rightarrow ((E | e) \ (+ | - | \epsilon) \ digits) \ | \ \epsilon \\
+  type \rightarrow f \ | \ F \ | \ l \ | \ L | \epsilon \\
+  number \rightarrow digits \ fraction \ exponent \ type
+  $$
+  
+
+- 标识符类型的正规式 (报错处理打算在 parser 部分支持)
+  $$
+  letter\_ \rightarrow [A-Za-z\_] \\
+  digit \rightarrow [0-9] \\
+  id \rightarrow letter\_ \ (letter\_ \ | \ digit)^*
+  $$
+
+- 字符类型的正规式 (转义字符已支持，但未 push 到 github 仓库，由于需要改进设计)
+
+  and other chars 指的是键盘上单个按键可以表示的字符。
+  $$
+  char \rightarrow [A-Za-z0-9] \ | \ and \ other \ chars
+  $$
+
+- 字符串类型的正规式 (转义字符已支持，但未 push 到 github 仓库，由于需要改进设计) 
+  $$
+  str \rightarrow char*
+  $$
+
+- 分隔符类型的正规式
+
+  请查看上面 "kric 支持的分隔符"。对于分隔符，先匹配非前缀分隔符，再匹配前缀分隔符。
+
+因为我考虑到编译器要足够聪明到发现某些问题，并提示程序员是哪个地方出错、出了什么错，如果是 DFA + 状态转换的方式，要支持这个 feature 可能非常麻烦。
+
+所以我为了理论和工程上的 trade-off，代码并不是严格按照 DFA 或正规式来实现的，目前 lexer 的实现不完善 (==这里的不完善指的是，对于语法正确且 kric 支持的源代码，完全可以转换成对应的正确的 token list；而对于语法有错误的程序，目前的报错处理并不完善==)。
+
+kric 目前可以在 lex 阶段，识别出某些位置的错误，发现错误 kric 会直接 exit，这不仅对用户友好，而且可以为用户节省宝贵的时间和电费，为环保作出贡献。报错信息的格式模仿的是 gcc，给出错误位置的行、列数，错误提示信息，以及出错的那一行代码。这部分的实现在 `include/error.h` 和 `src/error.c`。
 
 目前支持的错误识别有：
 
