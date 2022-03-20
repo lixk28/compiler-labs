@@ -146,16 +146,18 @@ token_t *lex(lexer_t *lexer)
     // ENHANCE:
     // read and convert binary, octal and hexadecimal number
     // currently we only read and convert decimal number
+    // FIXME:
+    // floating number format check
     if (isdigit(CURR_CHAR(lexer)) || (CURR_CHAR(lexer) == '.' && isdigit(PEEK_CHAR(lexer, 1))))
     {
       char *q = NEXT_CHAR(lexer);
       loop
       {
-        if (isalnum(CURR_CHAR(lexer)) || CURR_CHAR(lexer) == '.')
-          NEXT_CHAR(lexer);
-        else if (CURR_CHAR(lexer) && PEEK_CHAR(lexer, 1) && \
-                 strchr("eE", CURR_CHAR(lexer)) && strchr("+-", PEEK_CHAR(lexer, 1)))
+        if (CURR_CHAR(lexer) && PEEK_CHAR(lexer, 1) && \
+            strchr("eE", CURR_CHAR(lexer)) && strchr("+-", PEEK_CHAR(lexer, 1)))
           NEXT_NCHAR(lexer, 2);
+        else if (isalnum(CURR_CHAR(lexer)) || CURR_CHAR(lexer) == '.')
+          NEXT_CHAR(lexer);
         else
           break;
       }

@@ -27,6 +27,9 @@ int main(int argc, char *argv[])
 
   // this is an inline comment
 
+  float f1 = 3.14f;
+  double f2 = 1e-5;
+
   int a = 2;
   int b = 1;
   int c, d;
