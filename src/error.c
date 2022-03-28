@@ -45,3 +45,8 @@ void error_at(char *buf, char *loc, const char *fmt, ...)
   va_end(ap);
   exit(1);
 }
+
+void error_token(token_t *token, const char *fmt, ...)
+{
+  
+}

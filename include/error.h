@@ -1,6 +1,7 @@
 #ifndef ERROR_H
 #define ERROR_H
 
+#include "token.h"
 #include <stdarg.h>
 
 // taken from https://stackoverflow.com/questions/3219393/stdlib-and-colored-output-in-c
@@ -18,5 +19,9 @@
 // raise an error on tokenization stage
 void error_at(char *buf, char *loc, const char *fmt, ...) 
      __attribute__((__noreturn__, format(printf, 3, 4)));
+
+// raise an error when parsing a token
+void error_token(token_t *token, const char *fmt, ...)
+     __attribute__((__noreturn__, format(printf, 2, 3)));
 
 #endif

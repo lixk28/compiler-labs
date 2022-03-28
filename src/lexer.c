@@ -37,11 +37,11 @@ static char *read_src(const char *file_path)
 lexer_t *init_lexer(const char *file_path)
 {
   lexer_t *lexer = (lexer_t *) calloc(1, sizeof(lexer_t));
-  
+
   lexer->buf = read_src(file_path);
   lexer->p = lexer->buf;
   lexer->src_size = strlen(lexer->buf);
-  
+
   return lexer;
 }
 
@@ -52,9 +52,9 @@ void destroy_lexer(lexer_t *lexer)
 }
 
 // I take it from chibicc
-static bool start_with(char *buf, const char *prefix)
+static bool start_with(char *p, const char *prefix)
 {
-  return strncmp(buf, prefix, strlen(prefix)) == 0 ? true : false;
+  return strncmp(p, prefix, strlen(prefix)) == 0 ? true : false;
 }
 
 static bool is_keyword(token_t *token)
@@ -109,6 +109,93 @@ static int is_delimiter(char *p)
   return 0;
 }
 
+static char convert_char(token_t *token)
+{
+  char *p = token->loc;
+  if (*p == '\\') // escape character
+  {
+    // reference https://en.wikipedia.org/wiki/Escape_sequences_in_C
+    switch (*(p + 1))
+    {
+      case 'a': return '\a';
+      case 'b': return '\b';
+      case 'e': return '\e';
+      case 'f': return '\f';
+      case 'n': return '\n';
+      case 'r': return '\r';
+      case 't': return '\t';
+      case 'v': return '\v';
+      default: return *p;
+    }
+  }
+  else  // normal character
+    return *p;
+}
+
+static void convert_str(token_t *token)
+{
+  // TODO:
+  // just implement it
+
+  // ENHANCE:
+  // * escape character support
+  // * ignore single '\'
+}
+
+static bool convert_int(token_t *token)
+{
+  char *p = token->loc;
+
+  // check if it's a binary, octal or hexadecimal number
+  int base = 10;
+  if (start_with(p, "0x") && isxdigit(*(p + 2)))  // hexadecimal
+  {
+    p += 2;
+    base = 16;
+  }
+  else if (start_with(p, "0") && isdigit(*(p + 1))) // octal
+  {
+    p += 1;
+    base = 8;
+  }
+  else if (start_with(p, "0b") && (*(p + 2) == '0' || *(p + 2) == '1')) // binary
+  {
+    p += 2;
+    base = 2;
+  }
+
+  if (p != token->loc + token->len)
+    return false;
+
+  // TODO:
+  // U, L and LL suffixes
+
+  token->ival = strtoul(p, &p, base);
+  return true;
+}
+
+static void convert_number(token_t *token)
+{
+  // try to convert it as an integer value
+  if (convert_int(token))
+    return;
+
+  // if it's not an integer, it's a floating point number
+  char *end;
+  long double fval = strtold(token->loc, &end);
+
+  // NOTE:
+  // well, i think we can use *end to infer which type the floating number is
+  // *end = f or F, type is float
+  // *end = l or L, type is long double
+  // else type is double
+
+  if (token->loc + token->len != end)
+    error_token(token, "invalid numeric value");
+
+  token->fval = fval;
+}
+
 token_t *lex(lexer_t *lexer)
 {
   token_t head = {};
@@ -136,18 +223,13 @@ token_t *lex(lexer_t *lexer)
       char *q = strstr(lexer->p + 2, "*/");
       if (!q) // unclosed block comment
       {
-        error_at(lexer->buf, lexer->p, "unterminated comment");
+        error_at(lexer->buf, lexer->p, "unterminated block comment");
       }
       lexer->p = q + 2;
       continue;
     }
 
     // numeric literals
-    // ENHANCE:
-    // read and convert binary, octal and hexadecimal number
-    // currently we only read and convert decimal number
-    // FIXME:
-    // floating number format check
     if (isdigit(CURR_CHAR(lexer)) || (CURR_CHAR(lexer) == '.' && isdigit(PEEK_CHAR(lexer, 1))))
     {
       char *q = NEXT_CHAR(lexer);
@@ -162,6 +244,7 @@ token_t *lex(lexer_t *lexer)
           break;
       }
       curr->next = make_token(q, lexer->p - 1, T_NUM);
+      convert_number(curr->next);
       curr = curr->next;
       continue;
     }
@@ -171,7 +254,7 @@ token_t *lex(lexer_t *lexer)
     {
       if (PEEK_CHAR(lexer, 1) == '\0') // unclosed char literal
       {
-        error_at(lexer->buf, lexer->p, "missing terminating ' character");
+        error_at(lexer->buf, lexer->p, "unterminated character literal");
       }
 
       // ENHANCE:
@@ -181,11 +264,11 @@ token_t *lex(lexer_t *lexer)
       char *q = strchr(lexer->p + 1, '\'');
       if (!q) // unclosed char literal
       {
-        error_at(lexer->buf, lexer->p, "missing terminating ' character");
+        error_at(lexer->buf, lexer->p, "unterminated character literal");
       }
 
       curr->next = make_token(lexer->p, q, T_CHAR);
-      curr->next->cval = c;
+      curr->next->cval = convert_char(curr->next);
       curr = curr->next;
       NEXT_NCHAR(lexer, curr->len);
       continue;
@@ -196,17 +279,13 @@ token_t *lex(lexer_t *lexer)
     {
       if (PEEK_CHAR(lexer, 1) == '\0')  // unclosed string literal
       {
-        error_at(lexer->buf, lexer->p, "missing terminating \" character");
+        error_at(lexer->buf, lexer->p, "unterminated string literal");
       }
-
-      // ENHANCE:
-      // * escape character and utf-8 support
-      // * ignore single '\'
 
       char *q = strchr(lexer->p + 1, '"');
       if (!q) // unclosed string literal
       {
-        error_at(lexer->buf, lexer->p, "missing terminating \" character");
+        error_at(lexer->buf, lexer->p, "unterminated string literal");
       }
 
       curr->next = make_token(lexer->p, q, T_STR);
