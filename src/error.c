@@ -20,7 +20,7 @@ void error_at(char *buf, char *loc, const char *fmt, ...)
   char *line_end = loc;
   while (*line_end && *line_end != '\n')
     line_end++;
-  
+
   // count column number
   size_t col_num = 1;
   for (char *p = line_start; p != loc; p++)
@@ -46,7 +46,7 @@ void error_at(char *buf, char *loc, const char *fmt, ...)
   exit(1);
 }
 
-void error_token(token_t *token, const char *fmt, ...)
-{
-  
-}
+// void error_token(token_t *token, const char *fmt, ...)
+// {
+
+// }
