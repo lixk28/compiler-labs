@@ -31,7 +31,7 @@ $(OBJ): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 .PHONY: debug
 debug: CFLAGS += -DDEBUG -g
-debug: $(TARGET)
+debug: all
 
 .PHONY: build
 build:
