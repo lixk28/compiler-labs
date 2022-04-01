@@ -12,7 +12,7 @@ enum token_type_t
   T_NUM,  // numeric literals
   T_CHAR, // character literals
   T_STR,  // string literals
-  
+
   T_ID,         // identifiers
   T_KEYWORD,    // reserved words by C standard
   T_DELIMITER,  // everything including operators, parens, brackets, braces, commas, colons, semicolons
@@ -20,7 +20,7 @@ enum token_type_t
 
 typedef struct token_t token_t;
 struct token_t
-{  
+{
   char *loc;
   size_t len;
   token_type_t type;

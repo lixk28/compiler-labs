@@ -111,7 +111,7 @@ static int is_delimiter(char *p)
 
 static char convert_char(token_t *token)
 {
-  char *p = token->loc;
+  char *p = token->loc + 1;
   if (*p == '\\') // escape character
   {
     // reference https://en.wikipedia.org/wiki/Escape_sequences_in_C
@@ -134,8 +134,15 @@ static char convert_char(token_t *token)
 
 static void convert_str(token_t *token)
 {
-  // TODO:
-  // just implement it
+  token->sval = calloc(1, sizeof(char) * token->len - 1);
+
+  char *start_quote = token->loc + 1;
+  char *end_quote = strchr(start_quote, '"');
+  int sval_len = 0;
+
+  for (char *p = start_quote; p < end_quote; p++)
+    token->sval[sval_len++] = *p;
+  token->sval[sval_len] = '\0';
 
   // ENHANCE:
   // * escape character support
@@ -164,17 +171,19 @@ static bool convert_int(token_t *token)
     base = 2;
   }
 
-  if (p != token->loc + token->len)
-    return false;
+  // convert as an integer number
+  token->ival = strtoul(p, &p, base);
 
   // TODO:
   // U, L and LL suffixes
 
-  token->ival = strtoul(p, &p, base);
+  if (p != token->loc + token->len)
+    return false;
+
   return true;
 }
 
-static void convert_number(token_t *token)
+static void convert_number(lexer_t *lexer, token_t *token)
 {
   // try to convert it as an integer value
   if (convert_int(token))
@@ -191,7 +200,7 @@ static void convert_number(token_t *token)
   // else type is double
 
   if (token->loc + token->len != end)
-    error_token(token, "invalid numeric value");
+    error_token(lexer->buf, token, "invalid numeric value");
 
   token->fval = fval;
 }
@@ -244,7 +253,7 @@ token_t *lex(lexer_t *lexer)
           break;
       }
       curr->next = make_token(q, lexer->p - 1, T_NUM);
-      convert_number(curr->next);
+      convert_number(lexer, curr->next);
       curr = curr->next;
       continue;
     }
@@ -282,13 +291,17 @@ token_t *lex(lexer_t *lexer)
         error_at(lexer->buf, lexer->p, "unterminated string literal");
       }
 
-      char *q = strchr(lexer->p + 1, '"');
-      if (!q) // unclosed string literal
+      char *q = lexer->p + 1;
+      for (; *q != '"'; q++)
       {
-        error_at(lexer->buf, lexer->p, "unterminated string literal");
+        if (*q == '\n' || *q == '\0')
+          error_at(lexer->buf, lexer->p, "unterminated string literal");
+        if (*q == '\\')
+          q++;
       }
 
       curr->next = make_token(lexer->p, q, T_STR);
+      convert_str(curr->next);
       curr = curr->next;
       NEXT_NCHAR(lexer, curr->len);
       continue;

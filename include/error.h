@@ -2,7 +2,6 @@
 #define ERROR_H
 
 #include "token.h"
-#include <stdarg.h>
 
 // taken from https://stackoverflow.com/questions/3219393/stdlib-and-colored-output-in-c
 // reference https://en.wikipedia.org/wiki/ANSI_escape_code
@@ -17,11 +16,11 @@
 #define RESET   "\x1b[0m"
 
 // raise an error on tokenization stage
-void error_at(char *buf, char *loc, const char *fmt, ...) 
+void error_at(char *buf, char *loc, const char *fmt, ...)
      __attribute__((__noreturn__, format(printf, 3, 4)));
 
 // raise an error when parsing a token
-void error_token(token_t *token, const char *fmt, ...)
-     __attribute__((__noreturn__, format(printf, 2, 3)));
+void error_token(char *buf, token_t *token, const char *fmt, ...)
+     __attribute__((__noreturn__, format(printf, 3, 4)));
 
 #endif

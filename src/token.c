@@ -23,9 +23,10 @@ void print_token_list(token_t *head)
       case T_ID: fprintf(stdout, "Identifier\n"); break;
       case T_KEYWORD: fprintf(stdout, "Keyword\n"); break;
       case T_DELIMITER: fprintf(stdout, "Delimiter\n"); break;
-      case T_NUM: fprintf(stdout, "Numeric\n"); break;
-      case T_CHAR: fprintf(stdout, "Character\n"); break;
-      case T_STR: fprintf(stdout, "String\n"); break;
+      case T_NUM: fprintf(stdout, "Numeric: %ld or %Lf\n", head->ival, head->fval); break;
+      case T_CHAR: fprintf(stdout, "Character: %c\n", head->cval); break;
+      case T_STR: fprintf(stdout, "String: %s\n", head->sval); break;
+      case T_EOF: fprintf(stdout, "End Of File\n"); break;
       default: fprintf(stdout, "invalid token\n"); break;
     }
 

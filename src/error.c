@@ -1,4 +1,5 @@
 #include "error.h"
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +47,11 @@ void error_at(char *buf, char *loc, const char *fmt, ...)
   exit(1);
 }
 
-// void error_token(token_t *token, const char *fmt, ...)
-// {
-
-// }
+void error_token(char *buf, token_t *token, const char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  error_at(buf, token->loc, fmt, ap);
+  va_end(ap);
+  exit(1);
+}
