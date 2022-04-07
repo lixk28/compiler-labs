@@ -1,6 +1,7 @@
 #include "token.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 token_t *make_token(char *start, char *end, token_type_t type)
 {
@@ -9,6 +10,24 @@ token_t *make_token(char *start, char *end, token_type_t type)
   token->len = end - start + 1;
   token->type = type;
   return token;
+}
+
+static bool isequal(token_t *token, const char *tok_val)
+{
+  if (token->len == strlen(tok_val) && !memcmp(token->loc, tok_val, token->len))
+    return true;
+  else
+    return false;;
+}
+
+bool eat(token_t **tokens_p, token_t *tokens, const char *tok_val)
+{
+  if (isequal(tokens, tok_val))
+  {
+    *tokens_p = tokens->next;
+    return true;
+  }
+  return false;
 }
 
 void print_token_list(token_t *head)

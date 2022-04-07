@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum token_type_t token_type_t;
 enum token_type_t
@@ -38,6 +39,8 @@ struct token_t
 };
 
 token_t *make_token(char *start, char *end, token_type_t type);
+
+bool eat(token_t **tokens_p, token_t *tokens, const char *tok_val);
 
 void print_token_list(token_t *head);
 
