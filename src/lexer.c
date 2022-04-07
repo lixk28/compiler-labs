@@ -134,7 +134,7 @@ static char convert_char(token_t *token)
 
 static void convert_str(token_t *token)
 {
-  token->sval = calloc(1, sizeof(char) * token->len - 1);
+  token->sval = calloc(1, sizeof(char) * (token->len - 1));
 
   char *start_quote = token->loc + 1;
   char *end_quote = strchr(start_quote, '"');
