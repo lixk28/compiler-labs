@@ -1,21 +1,23 @@
 #include "parser.h"
 #include <stdlib.h>
 
-node_t *new_node(node_kind_t node_kind)
-{
-  node_t *node = calloc(1, sizeof(node_t));
-  node->node_kind = node_kind;
-  return node;
-}
+// TODO: LL(1) parsing table and LR(1) parsing table
 
-static token_t *next_token(token_t *tokens)
+node_t *parse(token_t *token_list)
 {
-  return tokens->next;
-}
+  node_t *root;
 
-node_t *parse(token_t *tokens)
-{
-  node_t *root = new_node(ND_NUM);
+  // TODO: build the parse tree
 
   return root;
+}
+
+void destroy_parse_tree(node_t *root)
+{
+  if (root)
+  {
+    destroy_parse_tree(root->lhs);
+    destroy_parse_tree(root->rhs);
+    free(root);
+  }
 }

@@ -1,18 +1,40 @@
+#define  _GNU_SOURCE  // for getline()
 #include <stdio.h>
-#include "kric.h"
+#include <stdlib.h>
+#include "lexer.h"
 
-void usage()
+int main(int argc, char * argv[])
 {
-  printf("Usage:\n");
-  printf("kric <file>\n");
-}
+  printf("hello, kcalc\n");
 
-int main(int argc, char *argv[])
-{
-  if (argc < 2)
-    usage();
+  for (;;)
+  {
+    fprintf(stdout, "> "); // prompt
+    for (;;)
+    {
+      char *line = NULL;
+      size_t len;
+      if (getline(&line, &len, stdin) == -1)
+        printf("no line\n");
+      else
+      {
+        printf("%s\n", line);
+        // line is the input of lexer
+        token_t *token_list = lex(line);
+        dump_token_list(token_list);
+        // lexer output to parser
+        // node_t *parse_tree = parse(token_list);
+        // parser generate tree, we then calculate the value
 
-  kric_compile(argv[1]);
+        // destroy token list
+        destroy_token_list(token_list);
+        // destroy parse tree
+        // destroy_parse_tree(parse_tree);
+        free(line);
+        break;
+      }
+    }
+  }
 
   return 0;
 }
