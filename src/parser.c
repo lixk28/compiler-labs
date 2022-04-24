@@ -1,7 +1,36 @@
 #include "parser.h"
 #include <stdlib.h>
 
-// TODO: LL(1) parsing table and LR(1) parsing table
+/* expression grammar represented in BNF
+ * <expr>   ::= <expr> "+" <term>
+ *            | <expr> "-" <term>
+ *            | <term>
+ * <term>   ::= <term> "*" <factor>
+ *            | <term> "/" <factor>
+ *            | <factor>
+ * <factor> ::= "(" <expr> ")"
+ *            | "num"
+ */
+
+/*  grammar used in LL(1) parsing with left recursion removed
+ *
+ *  (1)  <expr>   ::= <term> <expr'>
+ *  (2)  <expr'>  ::= "+" <term> <expr'>
+ *  (3)             | "-" <term> <expr'>
+ *  (4)             | ""
+ *  (5)  <term>   ::= <factor> <term'>
+ *  (6)  <term'>  ::= "*" <factor> <term'>
+ *  (7)             | "/" <factor> <term'>
+ *  (8)             | ""
+ *  (9)  <factor> ::= "(" <expr> ")"
+ *  (10)            | "num"
+ *
+ */
+
+// LL(1) parsing table
+
+// LR(1) parsing table
+
 
 node_t *parse(token_t *token_list)
 {
