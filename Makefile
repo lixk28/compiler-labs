@@ -1,4 +1,4 @@
-PROJECT_NAME := kric
+PROJECT_NAME := kcalc
 
 INC_DIR   := ./include
 SRC_DIR   := ./src
@@ -15,7 +15,7 @@ CC       := gcc
 CFLAGS 	 := -Wall -Wextra -std=c11
 LDFLAGS  :=
 
-TARGET := $(BIN_DIR)/kric
+TARGET := $(BIN_DIR)/kcalc
 
 .PHONY: all
 all: $(TARGET)
@@ -40,7 +40,7 @@ build:
 
 .PHONY: run
 run:
-	@$(TARGET) demo/demo.c
+	@$(TARGET)
 
 .PHONY: clean
 clean:
