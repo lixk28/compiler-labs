@@ -12,7 +12,7 @@ OBJ := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC))
 DEP := $(patsubst %.o,%.d,$(OBJ))
 
 CC       := gcc
-CFLAGS 	 := -Wall -Wextra -std=c11
+CFLAGS 	 := -Wall -Wextra -std=c99
 LDFLAGS  :=
 
 TARGET := $(BIN_DIR)/kcalc
