@@ -6,14 +6,21 @@
 
 typedef enum token_type
 {
-  TK_OP,
-  TK_NUM
+  TK_PLUS,
+  TK_MINUS,
+  TK_MUL,
+  TK_DIV,
+  TK_LPAREN,
+  TK_RPAREN,
+  TK_NUM,
+  TK_EOF
 } token_type;
 
 typedef struct token_t
 {
   token_type type;
-  char op;          // used if token type is TK_OP
+  char *loc;
+  size_t len;
   long double val;  // used if token type is TK_NUM
   struct token_t *next;
 } token_t;

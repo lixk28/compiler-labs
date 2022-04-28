@@ -28,8 +28,17 @@ token_t *lex(char *line)
     if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')')
     {
       curr->next = calloc(1, sizeof(token_t));
-      curr->next->type = TK_OP;
-      curr->next->op = *p;
+      switch (*p)
+      {
+        case '+': curr->next->type = TK_PLUS; break;
+        case '-': curr->next->type = TK_MINUS; break;
+        case '*': curr->next->type = TK_MUL; break;
+        case '/': curr->next->type = TK_DIV; break;
+        case '(': curr->next->type = TK_LPAREN; break;
+        case ')': curr->next->type = TK_RPAREN; break;
+      }
+      curr->next->loc = p;
+      curr->next->len = 1;
       curr = curr->next;
 
       p++;
@@ -54,6 +63,8 @@ token_t *lex(char *line)
 
       curr->next = calloc(1, sizeof(token_t));
       curr->next->type = TK_NUM;
+      curr->next->loc = q;
+      curr->next->len = p - q;
       curr->next->val = val;
       curr = curr->next;
 
@@ -63,6 +74,9 @@ token_t *lex(char *line)
     fprintf(stdout, "invalid expression!\n");
     break;
   }
+
+  curr->next = calloc(1, sizeof(token_t));
+  curr->next->type = TK_EOF;
 
   return head.next;
 }
@@ -74,11 +88,17 @@ void dump_token_list(token_t *head)
   {
     switch (head->type)
     {
-      case TK_OP: fprintf(stdout, "%c\n", head->op); break;
-      case TK_NUM: fprintf(stdout, "%Lf\n", head->val); break;
+      case TK_EOF:
+        fprintf(stdout, "<EOF>\n");
+        break;
+      default:
+        fwrite(head->loc, sizeof(char), head->len, stdout);
+        fputc('\n', stdout);
+        break;
     }
     head = head->next;
   }
+  fputc('\n', stdout);
 }
 
 void destroy_token_list(token_t *head)
