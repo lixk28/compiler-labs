@@ -16,9 +16,8 @@ typedef struct stack_t
 
 stack_t *new_stack(size_t capcity, size_t element_size);
 void push(stack_t *stack, void *element);
-void pop(stack_t *stack);
-void popn(stack_t *stack, size_t n);
-void top(stack_t *stack, void *element);
+void pop(stack_t *stack, void *element);
+void gettop(stack_t *stack, void *element);
 size_t size(stack_t *stack);
 bool is_empty(stack_t *stack);
 void destroy_stack(stack_t *stack);

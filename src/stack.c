@@ -24,13 +24,16 @@ void push(stack_t *stack, void *element)
       fprintf(stderr, "stack is full, element cannot be pushed\n");
       exit(1);
     }
-    memcpy(stack->top, element, stack->element_size);
-    stack->top += stack->element_size;
-    stack->size += 1;
+    if (element)
+    {
+      memcpy(stack->top, element, stack->element_size);
+      stack->top += stack->element_size;
+      stack->size += 1;
+    }
   }
 }
 
-void pop(stack_t *stack)
+void pop(stack_t *stack, void *element)
 {
   if (stack)
   {
@@ -39,28 +42,15 @@ void pop(stack_t *stack)
       fprintf(stderr, "stack is empty, cannot pop from an empty stack\n");
       exit(1);
     }
+    if (element)
+      memmove(element, stack->top - stack->element_size, stack->element_size);
     memset(stack->top - stack->element_size, 0, stack->element_size);
     stack->top -= stack->element_size;
     stack->size -= 1;
   }
 }
 
-void popn(stack_t *stack, size_t n)
-{
-  if (stack)
-  {
-    if (stack->size < n)
-    {
-      fprintf(stderr, "stack size %ld is smaller than %ld, cannot pop elements\n", stack->size, n);
-      exit(1);
-    }
-    memset(stack->top - stack->element_size * n, 0, stack->element_size * n);
-    stack->top -= stack->element_size * n;
-    stack->size -= n;
-  }
-}
-
-void top(stack_t *stack, void *top_element)
+void gettop(stack_t *stack, void *top_element)
 {
   if (stack)
   {
