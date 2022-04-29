@@ -270,29 +270,53 @@ node_t *ll1_parsing(token_t *token_list)
   return root_node;
 }
 
-static void dump_node(node_t *node, int indent)
+static void dump_node(node_t *node, const char *prefix, const char *children_prefix)
 {
   if (node)
   {
-    for (int i = 0; i < indent; i++)
-      fprintf(stdout, "  ");
+    fprintf(stdout, "%s", prefix);
+
     switch (node->type)
     {
-      case ND_EXPR: fprintf(stdout, "`-%s\n", "expr"); break;
-      case ND_EXPR_PRIME: fprintf(stdout, "`-%s\n", "expr'"); break;
-      case ND_TERM: fprintf(stdout, "`-%s\n", "term"); break;
-      case ND_TERM_PRIME: fprintf(stdout, "`-%s\n", "term'"); break;
-      case ND_FACTOR: fprintf(stdout, "`-%s\n", "factor"); break;
-      case ND_PLUS: fprintf(stdout, "`-%s\n", "plus"); break;
-      case ND_MINUS: fprintf(stdout, "`-%s\n", "minus"); break;
-      case ND_MUL: fprintf(stdout, "`-%s\n", "mul"); break;
-      case ND_DIV: fprintf(stdout, "`-%s\n", "div"); break;
-      case ND_LAPREN: fprintf(stdout, "`-%s\n", "lparen"); break;
-      case ND_RPAREN: fprintf(stdout, "`-%s\n", "rparen"); break;
-      case ND_NUM: fprintf(stdout, "`-%s=%Lf\n", "num", node->val); break;
+      case ND_EXPR: fprintf(stdout, "%s\n", "expr"); break;
+      case ND_EXPR_PRIME: fprintf(stdout, "%s\n", "expr'"); break;
+      case ND_TERM: fprintf(stdout, "%s\n", "term"); break;
+      case ND_TERM_PRIME: fprintf(stdout, "%s\n", "term'"); break;
+      case ND_FACTOR: fprintf(stdout, "%s\n", "factor"); break;
+      case ND_PLUS: fprintf(stdout, "%s: %c\n", "plus", '+'); break;
+      case ND_MINUS: fprintf(stdout, "%s: %c\n", "minus", '-'); break;
+      case ND_MUL: fprintf(stdout, "%s: %c\n", "mul", '*'); break;
+      case ND_DIV: fprintf(stdout, "%s: %c\n", "div", '/'); break;
+      case ND_LAPREN: fprintf(stdout, "%s: %c\n", "lparen", '('); break;
+      case ND_RPAREN: fprintf(stdout, "%s: %c\n", "rparen", ')'); break;
+      case ND_NUM: fprintf(stdout, "%s: %Lf\n", "num", node->val); break;
     }
+
+    char *pointer, *segment;
     for (int i = 0; i < node->child_num; i++)
-      dump_node(node->children[i], indent + 1);
+    {
+      if (i == node->child_num - 1)
+      {
+        pointer = "└── ";
+        segment = "    ";
+      }
+      else
+      {
+        pointer = "├── ";
+        segment = "│   ";
+      }
+
+      char *my_prefix = malloc(strlen(children_prefix) + strlen(pointer) + 1);
+      char *my_children_prefix = malloc(strlen(children_prefix) + strlen(segment) + 1);
+
+      sprintf(my_prefix, "%s%s", children_prefix, pointer);
+      sprintf(my_children_prefix, "%s%s", children_prefix, segment);
+
+      dump_node(node->children[i], my_prefix, my_children_prefix);
+
+      free(my_prefix);
+      free(my_children_prefix);
+    }
   }
 }
 
@@ -300,7 +324,7 @@ void dump_parse_tree(node_t *root)
 {
   fprintf(stdout, "parse tree dump:\n");
   if (root)
-    dump_node(root, 0);
+    dump_node(root, "", "");
 }
 
 void destroy_parse_tree(node_t *root)
