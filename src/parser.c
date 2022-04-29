@@ -91,6 +91,12 @@ static void expand(stack_t *stack, node_t *curr, int child_num, node_type childr
     push(stack, child);
 }
 
+static void error(const char *msg)
+{
+  fprintf(stderr, "%s\n", msg);
+  exit(1);
+}
+
 // LL(1) parsing table
 
 // LL(1) parsing
@@ -119,10 +125,7 @@ node_t *ll1_parsing(token_t *token_list)
         lookahead = lookahead->next;
       }
       else  // doesn't match
-      {
-        fprintf(stderr, "error in LL(1) parsing, mismatched terminals\n");
-        exit(1);
-      }
+        error("error in LL(1) parsing, mismatched terminals");
     }
     else  // top symbol is a nonterminal
     {
@@ -143,8 +146,7 @@ node_t *ll1_parsing(token_t *token_list)
                 push(stack, child);
               break;
             default:
-              fprintf(stderr, "error in LL(1) parsing, unexpected token\n");
-              exit(1);
+              error("error in LL(1) parsing, unexpected token");
           }
           break;
         case ND_EXPR_PRIME:
@@ -175,8 +177,7 @@ node_t *ll1_parsing(token_t *token_list)
               pop(stack, NULL);
               break;
             default:
-              fprintf(stderr, "error in LL(1) parsing, unexpected token\n");
-              exit(1);
+              error("error in LL(1) parsing, unexpected token");
           }
           break;
         case ND_TERM:
@@ -193,8 +194,7 @@ node_t *ll1_parsing(token_t *token_list)
                 push(stack, child);
               break;
             default:
-              fprintf(stderr, "error in LL(1) parsing, unexpected token\n");
-              exit(1);
+              error("error in LL(1) parsing, unexpected token");
           }
           break;
         case ND_TERM_PRIME:
@@ -229,8 +229,7 @@ node_t *ll1_parsing(token_t *token_list)
               pop(stack, NULL);
               break;
             default:
-              fprintf(stderr, "error in LL(1) parsing, unexpected token\n");
-              exit(1);
+              error("error in LL(1) parsing, unexpected token");
           }
           break;
         case ND_FACTOR:
@@ -255,8 +254,7 @@ node_t *ll1_parsing(token_t *token_list)
                 push(stack, child);
               break;
             default:
-              fprintf(stderr, "error in LL(1) parsing, unexpected token\n");
-              exit(1);
+              error("error in LL(1) parsing, unexpected token");
           }
           break;
       }
