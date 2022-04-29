@@ -14,7 +14,7 @@ typedef enum node_type
   ND_MINUS,
   ND_MUL,
   ND_DIV,
-  ND_LAPREN,
+  ND_LPAREN,
   ND_RPAREN,
   ND_NUM,
 

@@ -59,7 +59,7 @@ static bool isterminal(node_t *node)
          node->type == ND_MINUS ||
          node->type == ND_MUL ||
          node->type == ND_DIV ||
-         node->type == ND_LAPREN ||
+         node->type == ND_LPAREN ||
          node->type == ND_RPAREN ||
          node->type == ND_NUM;
 }
@@ -70,7 +70,7 @@ static bool match(node_t *node, token_t *token)
          (node->type == ND_MINUS && token->type == TK_MINUS) ||
          (node->type == ND_MUL && token->type == TK_MUL) ||
          (node->type == ND_DIV && token->type == TK_DIV) ||
-         (node->type == ND_LAPREN && token->type == TK_LPAREN) ||
+         (node->type == ND_LPAREN && token->type == TK_LPAREN) ||
          (node->type == ND_RPAREN && token->type == TK_RPAREN) ||
          (node->type == ND_NUM && token->type == TK_NUM);
   // return token1->len == token2->len &&
@@ -287,7 +287,7 @@ static void dump_node(node_t *node, const char *prefix, const char *children_pre
       case ND_MINUS: fprintf(stdout, "%s: %c\n", "minus", '-'); break;
       case ND_MUL: fprintf(stdout, "%s: %c\n", "mul", '*'); break;
       case ND_DIV: fprintf(stdout, "%s: %c\n", "div", '/'); break;
-      case ND_LAPREN: fprintf(stdout, "%s: %c\n", "lparen", '('); break;
+      case ND_LPAREN: fprintf(stdout, "%s: %c\n", "lparen", '('); break;
       case ND_RPAREN: fprintf(stdout, "%s: %c\n", "rparen", ')'); break;
       case ND_NUM: fprintf(stdout, "%s: %Lf\n", "num", node->val); break;
     }
