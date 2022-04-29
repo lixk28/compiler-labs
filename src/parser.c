@@ -239,7 +239,7 @@ node_t *ll1_parsing(token_t *token_list)
               pop(stack, &curr);
               curr->children = calloc(3, sizeof(node_t *));
               curr->child_num = 3;
-              curr->children[0] = new_op_node(ND_LAPREN);
+              curr->children[0] = new_op_node(ND_LPAREN);
               curr->children[1] = new_node(ND_EXPR, NULL, 0);
               curr->children[2] = new_op_node(ND_RPAREN);
               for (node_t **child = curr->children + curr->child_num - 1; child >= curr->children; child--)
