@@ -4,13 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-stack_t *new_stack(size_t capcity, size_t element_size)
+stack_t *new_stack(size_t capacity, size_t element_size)
 {
   stack_t *stack = calloc(1, sizeof(stack_t));
-  stack->bottom = malloc(element_size * capcity);
+  stack->bottom = malloc(element_size * capacity);
   stack->top = stack->bottom;
   stack->element_size = element_size;
-  stack->capcity = capcity;
+  stack->capacity = capacity;
   stack->size = 0;
   return stack;
 }
@@ -19,7 +19,7 @@ void push(stack_t *stack, void *element)
 {
   if (stack)
   {
-    if (stack->size == stack->capcity)
+    if (stack->size == stack->capacity)
     {
       fprintf(stderr, "stack is full, element cannot be pushed\n");
       exit(1);

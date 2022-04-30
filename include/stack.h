@@ -10,11 +10,11 @@ typedef struct stack_t
   uint8_t *bottom;
   uint8_t *top;
   size_t element_size;
-  size_t capcity;
+  size_t capacity;
   size_t size;
 } stack_t;
 
-stack_t *new_stack(size_t capcity, size_t element_size);
+stack_t *new_stack(size_t capacity, size_t element_size);
 void push(stack_t *stack, void *element);
 void pop(stack_t *stack, void *element);
 void gettop(stack_t *stack, void *element);
