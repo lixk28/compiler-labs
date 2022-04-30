@@ -16,6 +16,35 @@
 
 本次实验我实现了算术表达式的 LL(1) 分析器和 SLR(1) 分析器。算术表达式支持加减乘除和括号运算符。
 
+项目结构：
+
+```
+.
+├── build
+│   ├── bin
+│   └── obj
+├── include
+├── src
+├── Makefile
+└── report.pdf
+```
+
+- 可执行文件在 `build/bin` 目录下，名为 `kcalc`。
+- 编译中间文件 `*.o` 和 `*.d` 在 `build/obj` 下。
+- 头文件 `*.h` 在 `include` 下，源文件 `*.c` 在 `src` 下。
+
+构建项目：
+
+```shell
+make build && make	
+# you must run "make build" for the first time, which is not needed afterwards
+```
+
+```shell
+make clean
+# clean all the immediate files generated like *.o and *.d, also the executable
+```
+
 <div style="page-break-after: always;"></div>
 
 ### (1) LL(1) 分析器
