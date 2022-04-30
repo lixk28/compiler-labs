@@ -19,12 +19,12 @@ int main(int argc, char *argv[])
         printf("no line\n");
       else
       {
-        printf("%s\n", line);
+        // printf("%s\n", line);
         // line is the input of lexer
         token_t *token_list = lex(line);
-        dump_token_list(token_list);
+        // dump_token_list(token_list);
 
-        node_t *parse_tree = ll1_parsing(token_list);
+        node_t *parse_tree = slr1_parsing(token_list);
         dump_parse_tree(parse_tree);
 
         // destroy token list

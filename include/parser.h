@@ -21,6 +21,13 @@ typedef enum node_type
   ND_EOF
 } node_type;
 
+typedef enum action_type
+{
+  SHIFT,
+  REDUCE,
+  ACCEPT
+} action_type;
+
 typedef struct node_t
 {
   node_type type;
@@ -31,7 +38,7 @@ typedef struct node_t
 
 node_t *ll1_parsing(token_t *token_list);
 
-node_t *lr1_parsing(token_t *token_list);
+node_t *slr1_parsing(token_t *token_list);
 
 void dump_parse_tree(node_t *root);
 
