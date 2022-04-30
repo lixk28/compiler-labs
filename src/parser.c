@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "lexer.h"
 #include "stack.h"
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -429,9 +430,24 @@ static node_type toktype2nodetype(token_type tok)
   }
 }
 
-static void reduce_and_transfer()
+static void reduce_and_transfer(stack_t *state_stack, stack_t *node_stack, int *curr_state, node_type reduce_to, size_t prod_len)
 {
+  node_t *node = new_node(reduce_to, NULL, 0);
+  node->children = calloc(prod_len, sizeof(node_t *));
+  node->child_num = prod_len;
+  for (int i = node->child_num - 1; i >= 0; i--)
+  {
+    node_t *child;
+    pop(node_stack, &child);
+    node->children[i] = child;
+  }
+  push(node_stack, &node);
 
+  for (int i = 0; i < node->child_num; i++)
+    pop(state_stack, NULL);
+  gettop(state_stack, curr_state);
+  goto_table(curr_state, reduce_to);
+  push(state_stack, curr_state);
 }
 
 node_t *slr1_parsing(token_t *token_list)
@@ -501,126 +517,24 @@ node_t *slr1_parsing(token_t *token_list)
       {
         case 1: // E -> E + T
         case 2: // E -> E - T
-        {
-          node_t *node = new_node(ND_EXPR, NULL, 0);
-          node->children = calloc(3, sizeof(node_t *));
-          node->child_num = 3;
-          for (int i = node->child_num - 1; i >= 0; i--)
-          {
-            node_t *child;
-            pop(node_stack, &child);
-            node->children[i] = child;
-          }
-          push(node_stack, &node);
-
-          for (int i = 0; i < node->child_num; i++)
-            pop(state_stack, NULL);
-          gettop(state_stack, &curr_state);
-          goto_table(&curr_state, ND_EXPR);
-          push(state_stack, &curr_state);
-        }
-        break;
+          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_EXPR, 3);
+          break;
         case 3: // E -> T
-        {
-          node_t *node = new_node(ND_EXPR, NULL, 0);
-          node->children = calloc(1, sizeof(node_t *));
-          node->child_num = 1;
-          for (int i = node->child_num - 1; i >= 0; i--)
-          {
-            node_t *child;
-            pop(node_stack, &child);
-            node->children[i] = child;
-          }
-          push(node_stack, &node);
-
-          for (int i = 0; i < node->child_num; i++)
-            pop(state_stack, NULL);
-          gettop(state_stack, &curr_state);
-          goto_table(&curr_state, ND_EXPR);
-          push(state_stack, &curr_state);
-        }
-        break;
+          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_EXPR, 1);
+          break;
         case 4: // T -> T * F
         case 5: // T -> T / F
-        {
-          node_t *node = new_node(ND_TERM, NULL, 0);
-          node->children = calloc(3, sizeof(node_t *));
-          node->child_num = 3;
-          for (int i = node->child_num - 1; i >= 0; i--)
-          {
-            node_t *child;
-            pop(node_stack, &child);
-            node->children[i] = child;
-          }
-          push(node_stack, &node);
-
-          for (int i = 0; i < node->child_num; i++)
-            pop(state_stack, NULL);
-          gettop(state_stack, &curr_state);
-          goto_table(&curr_state, ND_TERM);
-          push(state_stack, &curr_state);
-        }
-        break;
+          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_TERM, 3);
+          break;
         case 6: // T -> F
-        {
-          node_t *node = new_node(ND_TERM, NULL, 0);
-          node->children = calloc(1, sizeof(node_t *));
-          node->child_num = 1;
-          for (int i = node->child_num - 1; i >= 0; i--)
-          {
-            node_t *child;
-            pop(node_stack, &child);
-            node->children[i] = child;
-          }
-          push(node_stack, &node);
-
-          for (int i = 0; i < node->child_num; i++)
-            pop(state_stack, NULL);
-          gettop(state_stack, &curr_state);
-          goto_table(&curr_state, ND_TERM);
-          push(state_stack, &curr_state);
-        }
-        break;
+          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_TERM, 1);
+          break;
         case 7: // F -> (E)
-        {
-          node_t *node = new_node(ND_FACTOR, NULL, 0);
-          node->children = calloc(3, sizeof(node_t *));
-          node->child_num = 3;
-          for (int i = node->child_num - 1; i >= 0; i--)
-          {
-            node_t *child;
-            pop(node_stack, &child);
-            node->children[i] = child;
-          }
-          push(node_stack, &node);
-
-          for (int i = 0; i < node->child_num; i++)
-            pop(state_stack, NULL);
-          gettop(state_stack, &curr_state);
-          goto_table(&curr_state, ND_FACTOR);
-          push(state_stack, &curr_state);
-        }
-        break;
+          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_TERM, 3);
+          break;
         case 8: // F -> num
-        {
-          node_t *node = new_node(ND_FACTOR, NULL, 0);
-          node->children = calloc(1, sizeof(node_t *));
-          node->child_num = 1;
-          for (int i = node->child_num - 1; i >= 0; i--)
-          {
-            node_t *child;
-            pop(node_stack, &child);
-            node->children[i] = child;
-          }
-          push(node_stack, &node);
-
-          for (int i = 0; i < node->child_num; i++)
-            pop(state_stack, NULL);
-          gettop(state_stack, &curr_state);
-          goto_table(&curr_state, ND_FACTOR);
-          push(state_stack, &curr_state);
-        }
-        break;
+          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_FACTOR, 1);
+          break;
       }
     }
     else if (act == ACCEPT)
