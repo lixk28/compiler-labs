@@ -3,6 +3,7 @@
 
 #include "lexer.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum node_type
 {
@@ -25,7 +26,8 @@ typedef enum action_type
 {
   SHIFT,
   REDUCE,
-  ACCEPT
+  ACCEPT,
+  ERR
 } action_type;
 
 typedef struct node_t
@@ -36,9 +38,9 @@ typedef struct node_t
   long double val;
 } node_t;
 
-node_t *ll1_parsing(token_t *token_list);
+node_t *ll1_parsing(token_t *token_list, bool verbose_cond);
 
-node_t *slr1_parsing(token_t *token_list);
+node_t *slr1_parsing(token_t *token_list, bool verbose_cond);
 
 void dump_parse_tree(node_t *root);
 

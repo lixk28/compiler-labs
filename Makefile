@@ -40,7 +40,7 @@ build:
 
 .PHONY: run
 run:
-	@$(TARGET)
+	@$(TARGET) ll
 
 .PHONY: clean
 clean:

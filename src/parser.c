@@ -48,8 +48,6 @@ static bool match(node_t *node, token_t *token)
          (node->type == ND_LPAREN && token->type == TK_LPAREN) ||
          (node->type == ND_RPAREN && token->type == TK_RPAREN) ||
          (node->type == ND_NUM && token->type == TK_NUM);
-  // return token1->len == token2->len &&
-  //        !memcmp(token1->loc, token2->loc, token1->len);
 }
 
 static void expand(stack_t *stack, node_t *curr, int child_num, node_type children_type[])
@@ -88,7 +86,7 @@ static void error(const char *msg)
  */
 
 // LL(1) parsing
-node_t *ll1_parsing(token_t *token_list)
+node_t *ll1_parsing(token_t *token_list, bool verbose_cond)
 {
   stack_t *stack = new_stack(512, sizeof(node_t *));
 
@@ -103,8 +101,53 @@ node_t *ll1_parsing(token_t *token_list)
   node_t *top;
   gettop(stack, &top);
 
+  if (verbose_cond)
+    fprintf(stdout, "LL(1) parsing procedure:\n");
+
   while (top->type != ND_EOF)
   {
+    if (verbose_cond)
+    {
+      fprintf(stdout, "stack: ");
+      for (size_t i = 0; i < stack->size; i++)
+      {
+        node_t *node;
+        memcpy(&node, stack->bottom + stack->element_size * i, sizeof(node_t *));
+        char tail = (i == stack->size - 1 ? '\n' : ' ');
+        switch (node->type)
+        {
+          case ND_EXPR: printf("%s%c", "ND_EXPR", tail); break;
+          case ND_EXPR_PRIME: printf("%s%c", "ND_EXPR_PRIME", tail); break;
+          case ND_TERM: printf("%s%c", "ND_TERM", tail); break;
+          case ND_TERM_PRIME: printf("%s%c", "ND_TERM_PRIME", tail); break;
+          case ND_FACTOR: printf("%s%c", "ND_FACTOR", tail); break;
+          case ND_PLUS: printf("%s%c", "ND_PLUS", tail); break;
+          case ND_MINUS: printf("%s%c", "ND_MINUS", tail); break;
+          case ND_MUL: printf("%s%c", "ND_MUL", tail); break;
+          case ND_DIV: printf("%s%c", "ND_DIV", tail); break;
+          case ND_LPAREN: printf("%s%c", "ND_LPAREN", tail); break;
+          case ND_RPAREN: printf("%s%c", "ND_RPAREN", tail); break;
+          case ND_NUM: printf("%s%c", "ND_NUM", tail); break;
+          case ND_EOF: printf("%s%c", "ND_EOF", tail); break;
+        }
+      }
+
+      fprintf(stdout, "lookahead: ");
+      switch (lookahead->type)
+      {
+        case TK_PLUS: printf("%s\n", "TK_PLUS"); break;
+        case TK_MINUS: printf("%s\n", "TK_MINUS"); break;
+        case TK_MUL: printf("%s\n", "TK_MUL"); break;
+        case TK_DIV: printf("%s\n", "TK_DIV"); break;
+        case TK_LPAREN: printf("%s\n", "TK_LPAREN"); break;
+        case TK_RPAREN: printf("%s\n", "TK_RPAREN"); break;
+        case TK_NUM: printf("%s\n", "TK_NUM"); break;
+        case TK_EOF: printf("%s\n", "TK_EOF"); break;
+      }
+
+      fprintf(stdout, "\n");
+    }
+
     if (isterminal(top))  // top symbol is a terminal
     {
       if (match(top, lookahead)) // matches
@@ -460,7 +503,7 @@ static void reduce_and_transfer(stack_t *state_stack, stack_t *node_stack, int *
  *
  */
 
-node_t *slr1_parsing(token_t *token_list)
+node_t *slr1_parsing(token_t *token_list, bool verbose_cond)
 {
   stack_t *node_stack = new_stack(512, sizeof(node_t *));
 
@@ -478,36 +521,40 @@ node_t *slr1_parsing(token_t *token_list)
 
   action_type act;
 
-  fprintf(stdout, "SLR(1) parsing procedure:\n");
+  if (verbose_cond)
+    fprintf(stdout, "SLR(1) parsing procedure:\n");
 
   for (;;) {
-    fprintf(stdout, "state stack: ");
-    for (size_t i = 0; i < state_stack->size; i++)
-      printf("%d%c", *(state_stack->bottom + state_stack->element_size * i), i == state_stack->size - 1 ? '\n' : ' ');
-
-    fprintf(stdout, "node stack : ");
-    for (size_t i = 0; i < node_stack->size; i++)
+    if (verbose_cond)
     {
-      node_t *node;
-      memcpy(&node, node_stack->bottom + node_stack->element_size * i, sizeof(node_t *));
-      char tail = (i == node_stack->size - 1 ? '\n' : ' ');
-      switch (node->type)
-      {
-        case ND_EXPR: printf("%s%c", "ND_EXPR", tail); break;
-        case ND_TERM: printf("%s%c", "ND_TERM", tail); break;
-        case ND_FACTOR: printf("%s%c", "ND_FACTOR", tail); break;
-        case ND_PLUS: printf("%s%c", "ND_PLUS", tail); break;
-        case ND_MINUS: printf("%s%c", "ND_MINUS", tail); break;
-        case ND_MUL: printf("%s%c", "ND_MUL", tail); break;
-        case ND_DIV: printf("%s%c", "ND_DIV", tail); break;
-        case ND_LPAREN: printf("%s%c", "ND_LPAREN", tail); break;
-        case ND_RPAREN: printf("%s%c", "ND_RPAREN", tail); break;
-        case ND_NUM: printf("%s%c", "ND_NUM", tail); break;
-        case ND_EOF: printf("%s%c", "ND_EOF", tail); break;
-      }
-    }
+      fprintf(stdout, "state stack: ");
+      for (size_t i = 0; i < state_stack->size; i++)
+        printf("%d%c", *(state_stack->bottom + state_stack->element_size * i), i == state_stack->size - 1 ? '\n' : ' ');
 
-    printf("\n");
+      fprintf(stdout, "node stack : ");
+      for (size_t i = 0; i < node_stack->size; i++)
+      {
+        node_t *node;
+        memcpy(&node, node_stack->bottom + node_stack->element_size * i, sizeof(node_t *));
+        char tail = (i == node_stack->size - 1 ? '\n' : ' ');
+        switch (node->type)
+        {
+          case ND_EXPR: printf("%s%c", "ND_EXPR", tail); break;
+          case ND_TERM: printf("%s%c", "ND_TERM", tail); break;
+          case ND_FACTOR: printf("%s%c", "ND_FACTOR", tail); break;
+          case ND_PLUS: printf("%s%c", "ND_PLUS", tail); break;
+          case ND_MINUS: printf("%s%c", "ND_MINUS", tail); break;
+          case ND_MUL: printf("%s%c", "ND_MUL", tail); break;
+          case ND_DIV: printf("%s%c", "ND_DIV", tail); break;
+          case ND_LPAREN: printf("%s%c", "ND_LPAREN", tail); break;
+          case ND_RPAREN: printf("%s%c", "ND_RPAREN", tail); break;
+          case ND_NUM: printf("%s%c", "ND_NUM", tail); break;
+          case ND_EOF: printf("%s%c", "ND_EOF", tail); break;
+        }
+      }
+
+      printf("\n");
+    }
 
     gettop(state_stack, &curr_state);
     action_table(&curr_state, lookahead->type, &act, &prod);
