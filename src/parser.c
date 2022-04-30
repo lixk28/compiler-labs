@@ -6,32 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* expression grammar represented in BNF
- * <expr>   ::= <expr> "+" <term>
- *            | <expr> "-" <term>
- *            | <term>
- * <term>   ::= <term> "*" <factor>
- *            | <term> "/" <factor>
- *            | <factor>
- * <factor> ::= "(" <expr> ")"
- *            | "num"
- */
-
-/*  grammar used in LL(1) parsing with left recursion removed
- *
- *  (1)  <expr>   ::= <term> <expr'>
- *  (2)  <expr'>  ::= "+" <term> <expr'>
- *  (3)             | "-" <term> <expr'>
- *  (4)             | ""
- *  (5)  <term>   ::= <factor> <term'>
- *  (6)  <term'>  ::= "*" <factor> <term'>
- *  (7)             | "/" <factor> <term'>
- *  (8)             | ""
- *  (9)  <factor> ::= "(" <expr> ")"
- *  (10)            | "num"
- *
- */
-
 static node_t *new_node(node_type type, node_t **children, int child_num)
 {
   node_t *node = calloc(1, sizeof(node_t));
@@ -98,7 +72,20 @@ static void error(const char *msg)
   exit(1);
 }
 
-// LL(1) parsing table
+/*  expression grammar used in LL(1) parsing with left recursion removed
+ *
+ *  (1)  <expr>   ::= <term> <expr'>
+ *  (2)  <expr'>  ::= "+" <term> <expr'>
+ *  (3)             | "-" <term> <expr'>
+ *  (4)             | ""
+ *  (5)  <term>   ::= <factor> <term'>
+ *  (6)  <term'>  ::= "*" <factor> <term'>
+ *  (7)             | "/" <factor> <term'>
+ *  (8)             | ""
+ *  (9)  <factor> ::= "(" <expr> ")"
+ *  (10)            | "num"
+ *
+ */
 
 // LL(1) parsing
 node_t *ll1_parsing(token_t *token_list)
@@ -281,12 +268,14 @@ static void action_table(int *state, token_type tok, action_type *act, int *prod
       switch (tok) {
         case TK_LPAREN: *act = SHIFT; *state = 4; break;
         case TK_NUM: *act = SHIFT; *state = 5; break;
+        default: error("error in SLR(1) parsing, unexpected token"); break;
       } break;
     case 1:
       switch (tok) {
         case TK_PLUS: *act = SHIFT; *state = 6; break;
         case TK_MINUS: *act = SHIFT; *state = 7; break;
         case TK_EOF: *act = ACCEPT; break;
+        default: error("error in SLR(1) parsing, unexpected token"); break;
       } break;
     case 2:
       switch (tok) {
@@ -296,6 +285,7 @@ static void action_table(int *state, token_type tok, action_type *act, int *prod
         case TK_EOF: *act = REDUCE; *prod = 3; break;
         case TK_MUL: *act = SHIFT; *state = 8; break;
         case TK_DIV: *act = SHIFT; *state = 9; break;
+        default: error("error in SLR(1) parsing, unexpected token"); break;
       } break;
     case 3:
       switch (tok) {
@@ -305,6 +295,7 @@ static void action_table(int *state, token_type tok, action_type *act, int *prod
         case TK_DIV:
         case TK_RPAREN:
         case TK_EOF: *act = REDUCE; *prod = 6; break;
+        default: error("error in SLR(1) parsing, unexpected token"); break;
       } break;
     case 5:
       switch (tok) {
@@ -314,12 +305,14 @@ static void action_table(int *state, token_type tok, action_type *act, int *prod
         case TK_DIV:
         case TK_RPAREN:
         case TK_EOF: *act = REDUCE; *prod = 8; break;
+        default: error("error in SLR(1) parsing, unexpected token"); break;
       } break;
     case 10:
       switch (tok) {
         case TK_PLUS: *act = SHIFT; *state = 6; break;
         case TK_MINUS: *act = SHIFT; *state = 7; break;
         case TK_RPAREN: *act = SHIFT; *state = 15; break;
+        default: error("error in SLR(1) parsing, unexpected token"); break;
       } break;
     case 11:
       switch (tok) {
@@ -329,6 +322,7 @@ static void action_table(int *state, token_type tok, action_type *act, int *prod
         case TK_EOF: *act = REDUCE; *prod = 1; break;
         case TK_MUL: *act = SHIFT; *state = 8; break;
         case TK_DIV: *act = SHIFT; *state = 9; break;
+        default: error("error in SLR(1) parsing, unexpected token"); break;
       } break;
     case 12:
       switch (tok) {
@@ -338,6 +332,7 @@ static void action_table(int *state, token_type tok, action_type *act, int *prod
         case TK_EOF: *act = REDUCE; *prod = 2; break;
         case TK_MUL: *act = SHIFT; *state = 8; break;
         case TK_DIV: *act = SHIFT; *state = 9; break;
+        default: error("error in SLR(1) parsing, unexpected token"); break;
       } break;
     case 13:
       switch (tok) {
@@ -347,6 +342,7 @@ static void action_table(int *state, token_type tok, action_type *act, int *prod
         case TK_DIV:
         case TK_RPAREN:
         case TK_EOF: *act = REDUCE; *prod = 4; break;
+        default: error("error in SLR(1) parsing, unexpected token"); break;
       } break;
     case 14:
       switch (tok) {
@@ -356,6 +352,7 @@ static void action_table(int *state, token_type tok, action_type *act, int *prod
         case TK_DIV:
         case TK_RPAREN:
         case TK_EOF: *act = REDUCE; *prod = 5; break;
+        default: error("error in SLR(1) parsing, unexpected token"); break;
       } break;
     case 15:
       switch (tok) {
@@ -365,6 +362,7 @@ static void action_table(int *state, token_type tok, action_type *act, int *prod
         case TK_DIV:
         case TK_RPAREN:
         case TK_EOF: *act = REDUCE; *prod = 7; break;
+        default: error("error in SLR(1) parsing, unexpected token"); break;
       } break;
     default:
       break;
@@ -379,31 +377,31 @@ static void goto_table(int *state, node_type sym)
         case ND_EXPR: *state = 1; break;
         case ND_TERM: *state = 2; break;
         case ND_FACTOR: *state = 3; break;
-        default: break;
+        default: error("error in SLR(1) parsing, reduce error"); break;
       } break;
     case 4:
       switch (sym) {
         case ND_EXPR: *state = 10; break;
         case ND_TERM: *state = 2; break;
         case ND_FACTOR: *state = 3; break;
-        default: break;
+        default: error("error in SLR(1) parsing, reduce error"); break;
       } break;
     case 6:
       switch (sym) {
         case ND_TERM: *state = 11; break;
         case ND_FACTOR: *state = 3; break;
-        default: break;
+        default: error("error in SLR(1) parsing, reduce error"); break;
       } break;
     case 7:
       switch (sym) {
         case ND_TERM: *state = 12; break;
         case ND_FACTOR: *state = 3; break;
-        default: break;
+        default: error("error in SLR(1) parsing, reduce error"); break;
       } break;
     case 8:
       switch (sym) {
         case ND_FACTOR: *state = 13; break;
-        default: break;
+        default: error("error in SLR(1) parsing, reduce error"); break;
       } break;
     case 9:
       switch (sym) {
@@ -449,6 +447,18 @@ static void reduce_and_transfer(stack_t *state_stack, stack_t *node_stack, int *
   goto_table(curr_state, reduce_to);
   push(state_stack, curr_state);
 }
+
+/* expression grammar used in SLR(1)
+ * (1) <expr>   ::= <expr> "+" <term>
+ * (2)            | <expr> "-" <term>
+ * (3)            | <term>
+ * (4) <term>   ::= <term> "*" <factor>
+ * (5)            | <term> "/" <factor>
+ * (6)            | <factor>
+ * (7) <factor> ::= "(" <expr> ")"
+ * (8)            | "num"
+ *
+ */
 
 node_t *slr1_parsing(token_t *token_list)
 {
@@ -515,24 +525,24 @@ node_t *slr1_parsing(token_t *token_list)
     {
       switch (prod)
       {
-        case 1: // E -> E + T
-        case 2: // E -> E - T
+        case 1: // <expr> ::= <expr> "+" <term>
+        case 2: // <expr> ::= <expr> "-" <term>
           reduce_and_transfer(state_stack, node_stack, &curr_state, ND_EXPR, 3);
           break;
-        case 3: // E -> T
+        case 3: // <expr> ::= <term>
           reduce_and_transfer(state_stack, node_stack, &curr_state, ND_EXPR, 1);
           break;
-        case 4: // T -> T * F
-        case 5: // T -> T / F
+        case 4: // <term> ::= <term> "*" <factor>
+        case 5: // <term> ::= <term> "/" <factor>
           reduce_and_transfer(state_stack, node_stack, &curr_state, ND_TERM, 3);
           break;
-        case 6: // T -> F
+        case 6: // <term> ::= <factor>
           reduce_and_transfer(state_stack, node_stack, &curr_state, ND_TERM, 1);
           break;
-        case 7: // F -> (E)
+        case 7: // <factor> ::= "(" <expr> ")"
           reduce_and_transfer(state_stack, node_stack, &curr_state, ND_TERM, 3);
           break;
-        case 8: // F -> num
+        case 8: // <factor> ::= "num"
           reduce_and_transfer(state_stack, node_stack, &curr_state, ND_FACTOR, 1);
           break;
       }
@@ -543,10 +553,7 @@ node_t *slr1_parsing(token_t *token_list)
       break;
     }
     else
-    {
-      fprintf(stderr, "error in SLR(1) parsing\n");
-      exit(1);
-    }
+      error("error in SLR(1) parsing");
   }
 
   node_t *root;
