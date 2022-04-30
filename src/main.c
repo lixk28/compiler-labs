@@ -9,7 +9,7 @@
 void usage()
 {
   fprintf(stdout, "usage:\n");
-  fprintf(stdout, "build/bin/kcalc <parsing>\n");
+  fprintf(stdout, "build/bin/kcalc <parsing> <verbose>\n");
   fprintf(stdout, "- <parsing>: ll or lr\n");
   fprintf(stdout, "- <verbose>: --verbose-on or --verbose-off\n");
   exit(1);
