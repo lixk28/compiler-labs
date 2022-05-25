@@ -39,6 +39,15 @@ static bool isterminal(node_t *node)
          node->type == ND_NUM;
 }
 
+static bool isaction(node_t *node)
+{
+  return node->type == ND_QUAD_PLUS ||
+         node->type == ND_QUAD_MINUS ||
+         node->type == ND_QUAD_MUL ||
+         node->type == ND_QUAD_DIV ||
+         node->type == ND_PUSH_NUM;
+}
+
 static bool match(node_t *node, token_t *token)
 {
   return (node->type == ND_PLUS && token->type == TK_PLUS) ||
@@ -64,6 +73,24 @@ static void expand(stack_t *stack, node_t *curr, int child_num, node_type childr
     push(stack, child);
 }
 
+void print_sem(sem_t sem)
+{
+  if (sem.istemp == true)
+    fprintf(stdout, "t%ld", sem.t);
+  else
+    fprintf(stdout, "%.2Lf", sem.val);
+}
+
+// emit a quadruple
+static void emit(char op, sem_t arg1, sem_t arg2, sem_t res)
+{
+  fprintf(stdout, "(%c, ", op);
+  print_sem(arg1); fprintf(stdout, ", ");
+  print_sem(arg2); fprintf(stdout, ", ");
+  print_sem(res);
+  fprintf(stdout, ")\n");
+}
+
 static void error(const char *msg)
 {
   fprintf(stderr, "%s\n", msg);
@@ -71,29 +98,32 @@ static void error(const char *msg)
 }
 
 /*  expression grammar used in LL(1) parsing with left recursion removed
+ *  extended with action symbols
  *
  *  (1)  <expr>   ::= <term> <expr'>
- *  (2)  <expr'>  ::= "+" <term> <expr'>
- *  (3)             | "-" <term> <expr'>
+ *  (2)  <expr'>  ::= "+" <term> <GEQ(+)> <expr'>
+ *  (3)             | "-" <term> <GEQ(-)> <expr'>
  *  (4)             | ""
  *  (5)  <term>   ::= <factor> <term'>
- *  (6)  <term'>  ::= "*" <factor> <term'>
- *  (7)             | "/" <factor> <term'>
+ *  (6)  <term'>  ::= "*" <factor> <GEQ(*)> <term'>
+ *  (7)             | "/" <factor> <GEQ(/)> <term'>
  *  (8)             | ""
  *  (9)  <factor> ::= "(" <expr> ")"
- *  (10)            | "num"
+ *  (10)            | "num" <PUSH(i)>
  *
  */
 
-// LL(1) parsing
-node_t *ll1_parsing(token_t *token_list, bool verbose_cond)
+static size_t t;
+
+// LL(1) parsing with quadruple translation
+node_t *ll1_parsing(token_t *token_list)
 {
   stack_t *stack = new_stack(512, sizeof(node_t *));
+  stack_t *sem_stack = new_stack(128, sizeof(sem_t));
 
-  node_t *eof_node = new_node(ND_EOF, NULL, 0);
   node_t *root_node = new_node(ND_EXPR, NULL, 0);
 
-  push(stack, &eof_node);
+  push(stack, &(node_t *){new_node(ND_EOF, NULL, 0)});
   push(stack, &root_node);
 
   token_t *lookahead = token_list;
@@ -101,54 +131,48 @@ node_t *ll1_parsing(token_t *token_list, bool verbose_cond)
   node_t *top;
   gettop(stack, &top);
 
-  if (verbose_cond)
-    fprintf(stdout, "LL(1) parsing procedure:\n");
-
   while (top->type != ND_EOF)
   {
-    if (verbose_cond)
+    if (isaction(top)) // top symbol is an action
     {
-      fprintf(stdout, "stack: ");
-      for (size_t i = 0; i < stack->size; i++)
+      sem_t arg1, arg2, res;
+      if (top->type != ND_PUSH_NUM)
       {
-        node_t *node;
-        memcpy(&node, stack->bottom + stack->element_size * i, sizeof(node_t *));
-        char tail = (i == stack->size - 1 ? '\n' : ' ');
-        switch (node->type)
-        {
-          case ND_EXPR: printf("%s%c", "ND_EXPR", tail); break;
-          case ND_EXPR_PRIME: printf("%s%c", "ND_EXPR_PRIME", tail); break;
-          case ND_TERM: printf("%s%c", "ND_TERM", tail); break;
-          case ND_TERM_PRIME: printf("%s%c", "ND_TERM_PRIME", tail); break;
-          case ND_FACTOR: printf("%s%c", "ND_FACTOR", tail); break;
-          case ND_PLUS: printf("%s%c", "ND_PLUS", tail); break;
-          case ND_MINUS: printf("%s%c", "ND_MINUS", tail); break;
-          case ND_MUL: printf("%s%c", "ND_MUL", tail); break;
-          case ND_DIV: printf("%s%c", "ND_DIV", tail); break;
-          case ND_LPAREN: printf("%s%c", "ND_LPAREN", tail); break;
-          case ND_RPAREN: printf("%s%c", "ND_RPAREN", tail); break;
-          case ND_NUM: printf("%s%c", "ND_NUM", tail); break;
-          case ND_EOF: printf("%s%c", "ND_EOF", tail); break;
-        }
+        pop(sem_stack, &arg2);
+        pop(sem_stack, &arg1);
+        res.istemp = true;
+        res.t = ++t;
       }
 
-      fprintf(stdout, "lookahead: ");
-      switch (lookahead->type)
+      switch (top->type)
       {
-        case TK_PLUS: printf("%s\n", "TK_PLUS"); break;
-        case TK_MINUS: printf("%s\n", "TK_MINUS"); break;
-        case TK_MUL: printf("%s\n", "TK_MUL"); break;
-        case TK_DIV: printf("%s\n", "TK_DIV"); break;
-        case TK_LPAREN: printf("%s\n", "TK_LPAREN"); break;
-        case TK_RPAREN: printf("%s\n", "TK_RPAREN"); break;
-        case TK_NUM: printf("%s\n", "TK_NUM"); break;
-        case TK_EOF: printf("%s\n", "TK_EOF"); break;
+        case ND_QUAD_PLUS:
+          emit('+', arg1, arg2, res);
+          push(sem_stack, &res);
+          break;
+        case ND_QUAD_MINUS:
+          emit('-', arg1, arg2, res);
+          push(sem_stack, &res);
+          break;
+        case ND_QUAD_MUL:
+          emit('*', arg1, arg2, res);
+          push(sem_stack, &res);
+          break;
+        case ND_QUAD_DIV:
+          emit('/', arg1, arg2, res);
+          push(sem_stack, &res);
+          break;
+        case ND_PUSH_NUM:
+          push(sem_stack, &(sem_t){
+                .istemp = false,
+                .t = 0,
+                .val = top->val,
+              });
+          break;
       }
-
-      fprintf(stdout, "\n");
+      pop(stack, NULL);
     }
-
-    if (isterminal(top))  // top symbol is a terminal
+    else if (isterminal(top))  // top symbol is a terminal
     {
       if (match(top, lookahead)) // matches
       {
@@ -185,21 +209,23 @@ node_t *ll1_parsing(token_t *token_list, bool verbose_cond)
           {
             case TK_PLUS:
               pop(stack, &curr);
-              curr->children = calloc(3, sizeof(node_t *));
-              curr->child_num = 3;
+              curr->children = calloc(4, sizeof(node_t *));
+              curr->child_num = 4;
               curr->children[0] = new_op_node(ND_PLUS);
               curr->children[1] = new_node(ND_TERM, NULL, 0);
-              curr->children[2] = new_node(ND_EXPR_PRIME, NULL, 0);
+              curr->children[2] = new_node(ND_QUAD_PLUS, NULL, 0);
+              curr->children[3] = new_node(ND_EXPR_PRIME, NULL, 0);
               for (node_t **child = curr->children + curr->child_num - 1; child >= curr->children; child--)
                 push(stack, child);
               break;
             case TK_MINUS:
               pop(stack, &curr);
-              curr->children = calloc(3, sizeof(node_t *));
-              curr->child_num = 3;
+              curr->children = calloc(4, sizeof(node_t *));
+              curr->child_num = 4;
               curr->children[0] = new_op_node(ND_MINUS);
               curr->children[1] = new_node(ND_TERM, NULL, 0);
-              curr->children[2] = new_node(ND_EXPR_PRIME, NULL, 0);
+              curr->children[2] = new_node(ND_QUAD_MINUS, NULL, 0);
+              curr->children[3] = new_node(ND_EXPR_PRIME, NULL, 0);
               for (node_t **child = curr->children + curr->child_num - 1; child >= curr->children; child--)
                 push(stack, child);
               break;
@@ -237,21 +263,23 @@ node_t *ll1_parsing(token_t *token_list, bool verbose_cond)
               break;
             case TK_MUL:
               pop(stack, &curr);
-              curr->children = calloc(3, sizeof(node_t *));
-              curr->child_num = 3;
+              curr->children = calloc(4, sizeof(node_t *));
+              curr->child_num = 4;
               curr->children[0] = new_op_node(ND_MUL);
               curr->children[1] = new_node(ND_FACTOR, NULL, 0);
-              curr->children[2] = new_node(ND_TERM_PRIME, NULL, 0);
+              curr->children[2] = new_node(ND_QUAD_MUL, NULL, 0);
+              curr->children[3] = new_node(ND_TERM_PRIME, NULL, 0);
               for (node_t **child = curr->children + curr->child_num - 1; child >= curr->children; child--)
                 push(stack, child);
               break;
             case TK_DIV:
               pop(stack, &curr);
-              curr->children = calloc(3, sizeof(node_t *));
-              curr->child_num = 3;
+              curr->children = calloc(4, sizeof(node_t *));
+              curr->child_num = 4;
               curr->children[0] = new_op_node(ND_DIV);
               curr->children[1] = new_node(ND_FACTOR, NULL, 0);
-              curr->children[2] = new_node(ND_TERM_PRIME, NULL, 0);
+              curr->children[2] = new_node(ND_QUAD_DIV, NULL, 0);
+              curr->children[3] = new_node(ND_TERM_PRIME, NULL, 0);
               for (node_t **child = curr->children + curr->child_num - 1; child >= curr->children; child--)
                 push(stack, child);
               break;
@@ -278,9 +306,11 @@ node_t *ll1_parsing(token_t *token_list, bool verbose_cond)
               break;
             case TK_NUM:
               pop(stack, &curr);
-              curr->children = calloc(1, sizeof(node_t *));
-              curr->child_num = 1;
+              curr->children = calloc(2, sizeof(node_t *));
+              curr->child_num = 2;
               curr->children[0] = new_num_node(lookahead->val);
+              curr->children[1] = new_node(ND_PUSH_NUM, NULL, 0);
+              curr->children[1]->val = lookahead->val;
               for (node_t **child = curr->children + curr->child_num - 1; child >= curr->children; child--)
                 push(stack, child);
               break;
@@ -294,324 +324,8 @@ node_t *ll1_parsing(token_t *token_list, bool verbose_cond)
     gettop(stack, &top);
   }
 
-  free(eof_node);
   destroy_stack(stack);
   return root_node;
-}
-
-static void action_table(int *state, token_type tok, action_type *act, int *prod)
-{
-  switch (*state) {
-    case 0:
-    case 4:
-    case 6:
-    case 7:
-    case 8:
-    case 9:
-      switch (tok) {
-        case TK_LPAREN: *act = SHIFT; *state = 4; break;
-        case TK_NUM: *act = SHIFT; *state = 5; break;
-        default: error("error in SLR(1) parsing, unexpected token"); break;
-      } break;
-    case 1:
-      switch (tok) {
-        case TK_PLUS: *act = SHIFT; *state = 6; break;
-        case TK_MINUS: *act = SHIFT; *state = 7; break;
-        case TK_EOF: *act = ACCEPT; break;
-        default: error("error in SLR(1) parsing, unexpected token"); break;
-      } break;
-    case 2:
-      switch (tok) {
-        case TK_PLUS:
-        case TK_MINUS:
-        case TK_RPAREN:
-        case TK_EOF: *act = REDUCE; *prod = 3; break;
-        case TK_MUL: *act = SHIFT; *state = 8; break;
-        case TK_DIV: *act = SHIFT; *state = 9; break;
-        default: error("error in SLR(1) parsing, unexpected token"); break;
-      } break;
-    case 3:
-      switch (tok) {
-        case TK_PLUS:
-        case TK_MINUS:
-        case TK_MUL:
-        case TK_DIV:
-        case TK_RPAREN:
-        case TK_EOF: *act = REDUCE; *prod = 6; break;
-        default: error("error in SLR(1) parsing, unexpected token"); break;
-      } break;
-    case 5:
-      switch (tok) {
-        case TK_PLUS:
-        case TK_MINUS:
-        case TK_MUL:
-        case TK_DIV:
-        case TK_RPAREN:
-        case TK_EOF: *act = REDUCE; *prod = 8; break;
-        default: error("error in SLR(1) parsing, unexpected token"); break;
-      } break;
-    case 10:
-      switch (tok) {
-        case TK_PLUS: *act = SHIFT; *state = 6; break;
-        case TK_MINUS: *act = SHIFT; *state = 7; break;
-        case TK_RPAREN: *act = SHIFT; *state = 15; break;
-        default: error("error in SLR(1) parsing, unexpected token"); break;
-      } break;
-    case 11:
-      switch (tok) {
-        case TK_PLUS:
-        case TK_MINUS:
-        case TK_RPAREN:
-        case TK_EOF: *act = REDUCE; *prod = 1; break;
-        case TK_MUL: *act = SHIFT; *state = 8; break;
-        case TK_DIV: *act = SHIFT; *state = 9; break;
-        default: error("error in SLR(1) parsing, unexpected token"); break;
-      } break;
-    case 12:
-      switch (tok) {
-        case TK_PLUS:
-        case TK_MINUS:
-        case TK_RPAREN:
-        case TK_EOF: *act = REDUCE; *prod = 2; break;
-        case TK_MUL: *act = SHIFT; *state = 8; break;
-        case TK_DIV: *act = SHIFT; *state = 9; break;
-        default: error("error in SLR(1) parsing, unexpected token"); break;
-      } break;
-    case 13:
-      switch (tok) {
-        case TK_PLUS:
-        case TK_MINUS:
-        case TK_MUL:
-        case TK_DIV:
-        case TK_RPAREN:
-        case TK_EOF: *act = REDUCE; *prod = 4; break;
-        default: error("error in SLR(1) parsing, unexpected token"); break;
-      } break;
-    case 14:
-      switch (tok) {
-        case TK_PLUS:
-        case TK_MINUS:
-        case TK_MUL:
-        case TK_DIV:
-        case TK_RPAREN:
-        case TK_EOF: *act = REDUCE; *prod = 5; break;
-        default: error("error in SLR(1) parsing, unexpected token"); break;
-      } break;
-    case 15:
-      switch (tok) {
-        case TK_PLUS:
-        case TK_MINUS:
-        case TK_MUL:
-        case TK_DIV:
-        case TK_RPAREN:
-        case TK_EOF: *act = REDUCE; *prod = 7; break;
-        default: error("error in SLR(1) parsing, unexpected token"); break;
-      } break;
-    default:
-      break;
-  }
-}
-
-static void goto_table(int *state, node_type sym)
-{
-  switch (*state) {
-    case 0:
-      switch (sym) {
-        case ND_EXPR: *state = 1; break;
-        case ND_TERM: *state = 2; break;
-        case ND_FACTOR: *state = 3; break;
-        default: error("error in SLR(1) parsing, reduce error"); break;
-      } break;
-    case 4:
-      switch (sym) {
-        case ND_EXPR: *state = 10; break;
-        case ND_TERM: *state = 2; break;
-        case ND_FACTOR: *state = 3; break;
-        default: error("error in SLR(1) parsing, reduce error"); break;
-      } break;
-    case 6:
-      switch (sym) {
-        case ND_TERM: *state = 11; break;
-        case ND_FACTOR: *state = 3; break;
-        default: error("error in SLR(1) parsing, reduce error"); break;
-      } break;
-    case 7:
-      switch (sym) {
-        case ND_TERM: *state = 12; break;
-        case ND_FACTOR: *state = 3; break;
-        default: error("error in SLR(1) parsing, reduce error"); break;
-      } break;
-    case 8:
-      switch (sym) {
-        case ND_FACTOR: *state = 13; break;
-        default: error("error in SLR(1) parsing, reduce error"); break;
-      } break;
-    case 9:
-      switch (sym) {
-        case ND_FACTOR: *state = 13; break;
-        default: break;
-      } break;
-    default:
-      break;
-  }
-}
-
-// this is so nasty...
-static node_type toktype2nodetype(token_type tok)
-{
-  switch (tok)
-  {
-    case TK_PLUS: return ND_PLUS; break;
-    case TK_MINUS: return ND_MINUS; break;
-    case TK_MUL: return ND_MUL; break;
-    case TK_DIV: return ND_DIV; break;
-    case TK_LPAREN: return ND_LPAREN; break;
-    case TK_RPAREN: return ND_RPAREN; break;
-    case TK_NUM: return ND_NUM; break;
-  }
-}
-
-static void reduce_and_transfer(stack_t *state_stack, stack_t *node_stack, int *curr_state, node_type reduce_to, size_t prod_len)
-{
-  node_t *node = new_node(reduce_to, NULL, 0);
-  node->children = calloc(prod_len, sizeof(node_t *));
-  node->child_num = prod_len;
-  for (int i = node->child_num - 1; i >= 0; i--)
-  {
-    node_t *child;
-    pop(node_stack, &child);
-    node->children[i] = child;
-  }
-  push(node_stack, &node);
-
-  for (int i = 0; i < node->child_num; i++)
-    pop(state_stack, NULL);
-  gettop(state_stack, curr_state);
-  goto_table(curr_state, reduce_to);
-  push(state_stack, curr_state);
-}
-
-/* expression grammar used in SLR(1)
- * (1) <expr>   ::= <expr> "+" <term>
- * (2)            | <expr> "-" <term>
- * (3)            | <term>
- * (4) <term>   ::= <term> "*" <factor>
- * (5)            | <term> "/" <factor>
- * (6)            | <factor>
- * (7) <factor> ::= "(" <expr> ")"
- * (8)            | "num"
- *
- */
-
-node_t *slr1_parsing(token_t *token_list, bool verbose_cond)
-{
-  stack_t *node_stack = new_stack(512, sizeof(node_t *));
-
-  node_t *eof_node = new_node(ND_EOF, NULL, 0);
-
-  push(node_stack, &eof_node);
-
-  stack_t *state_stack = new_stack(512, sizeof(int));
-  int curr_state = 0;
-  push(state_stack, &curr_state);
-
-  token_t *lookahead = token_list;
-
-  int prod;
-
-  action_type act;
-
-  if (verbose_cond)
-    fprintf(stdout, "SLR(1) parsing procedure:\n");
-
-  for (;;) {
-    if (verbose_cond)
-    {
-      fprintf(stdout, "state stack: ");
-      for (size_t i = 0; i < state_stack->size; i++)
-        printf("%d%c", *(state_stack->bottom + state_stack->element_size * i), i == state_stack->size - 1 ? '\n' : ' ');
-
-      fprintf(stdout, "node stack : ");
-      for (size_t i = 0; i < node_stack->size; i++)
-      {
-        node_t *node;
-        memcpy(&node, node_stack->bottom + node_stack->element_size * i, sizeof(node_t *));
-        char tail = (i == node_stack->size - 1 ? '\n' : ' ');
-        switch (node->type)
-        {
-          case ND_EXPR: printf("%s%c", "ND_EXPR", tail); break;
-          case ND_TERM: printf("%s%c", "ND_TERM", tail); break;
-          case ND_FACTOR: printf("%s%c", "ND_FACTOR", tail); break;
-          case ND_PLUS: printf("%s%c", "ND_PLUS", tail); break;
-          case ND_MINUS: printf("%s%c", "ND_MINUS", tail); break;
-          case ND_MUL: printf("%s%c", "ND_MUL", tail); break;
-          case ND_DIV: printf("%s%c", "ND_DIV", tail); break;
-          case ND_LPAREN: printf("%s%c", "ND_LPAREN", tail); break;
-          case ND_RPAREN: printf("%s%c", "ND_RPAREN", tail); break;
-          case ND_NUM: printf("%s%c", "ND_NUM", tail); break;
-          case ND_EOF: printf("%s%c", "ND_EOF", tail); break;
-        }
-      }
-
-      printf("\n");
-    }
-
-    gettop(state_stack, &curr_state);
-    action_table(&curr_state, lookahead->type, &act, &prod);
-
-    if (act == SHIFT)
-    {
-      push(state_stack, &curr_state);
-      node_t *node = new_node(toktype2nodetype(lookahead->type), NULL, 0);
-      if (node->type == ND_NUM)
-        node->val = lookahead->val;
-      push(node_stack, &node);
-      lookahead = lookahead->next;
-    }
-    else if (act == REDUCE)
-    {
-      switch (prod)
-      {
-        case 1: // <expr> ::= <expr> "+" <term>
-        case 2: // <expr> ::= <expr> "-" <term>
-          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_EXPR, 3);
-          break;
-        case 3: // <expr> ::= <term>
-          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_EXPR, 1);
-          break;
-        case 4: // <term> ::= <term> "*" <factor>
-        case 5: // <term> ::= <term> "/" <factor>
-          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_TERM, 3);
-          break;
-        case 6: // <term> ::= <factor>
-          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_TERM, 1);
-          break;
-        case 7: // <factor> ::= "(" <expr> ")"
-          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_TERM, 3);
-          break;
-        case 8: // <factor> ::= "num"
-          reduce_and_transfer(state_stack, node_stack, &curr_state, ND_FACTOR, 1);
-          break;
-      }
-    }
-    else if (act == ACCEPT)
-    {
-      fprintf(stdout, "ACCEPT!\n\n");
-      break;
-    }
-    else
-      error("error in SLR(1) parsing");
-  }
-
-  node_t *root;
-  gettop(node_stack, &root);
-
-  destroy_stack(node_stack);
-  destroy_stack(state_stack);
-
-  free(eof_node);
-
-  return root;
 }
 
 static void dump_node(node_t *node, const char *prefix, const char *children_prefix)

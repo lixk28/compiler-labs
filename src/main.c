@@ -9,31 +9,12 @@
 void usage()
 {
   fprintf(stdout, "usage:\n");
-  fprintf(stdout, "build/bin/kcalc <parsing> <verbose>\n");
-  fprintf(stdout, "- <parsing>: ll or lr\n");
-  fprintf(stdout, "- <verbose>: --verbose-on or --verbose-off\n");
+  fprintf(stdout, "build/bin/kcalc\n");
   exit(1);
 }
 
 int main(int argc, char *argv[])
 {
-  if (argc < 3)
-    usage();
-
-  const char *parsing = argv[1];
-  const char *verbose = argv[2];
-
-  bool verbose_cond;
-  if (!strcmp(verbose, "--verbose-on"))
-    verbose_cond = true;
-  else if (!strcmp(verbose, "--verbose-off"))
-    verbose_cond = false;
-  else
-  {
-    fprintf(stdout, "unknown verbose option\n");
-    exit(1);
-  }
-
   printf("hello, kcalc\n");
 
   for (;;)
@@ -52,18 +33,7 @@ int main(int argc, char *argv[])
         token_t *token_list = lex(line);
         // dump_token_list(token_list);
 
-        node_t *parse_tree;
-        if (!strcmp(parsing, "ll"))
-          parse_tree = ll1_parsing(token_list, verbose_cond);
-        else if (!strcmp(parsing, "lr"))
-          parse_tree  = slr1_parsing(token_list, verbose_cond);
-        else
-        {
-          fprintf(stderr, "unknown parsing option\n");
-          exit(1);
-        }
-
-        dump_parse_tree(parse_tree);
+        node_t *parse_tree = ll1_parsing(token_list);
 
         // destroy token list
         destroy_token_list(token_list);

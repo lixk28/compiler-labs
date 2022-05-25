@@ -19,6 +19,13 @@ typedef enum node_type
   ND_RPAREN,
   ND_NUM,
 
+  // syntax-directed translation for quadruple
+  ND_QUAD_PLUS,
+  ND_QUAD_MINUS,
+  ND_QUAD_MUL,
+  ND_QUAD_DIV,
+  ND_PUSH_NUM,
+
   ND_EOF
 } node_type;
 
@@ -38,9 +45,14 @@ typedef struct node_t
   long double val;
 } node_t;
 
-node_t *ll1_parsing(token_t *token_list, bool verbose_cond);
+typedef struct sem_t
+{
+  bool istemp;
+  size_t t;
+  long double val;
+} sem_t;
 
-node_t *slr1_parsing(token_t *token_list, bool verbose_cond);
+node_t *ll1_parsing(token_t *token_list);
 
 void dump_parse_tree(node_t *root);
 
