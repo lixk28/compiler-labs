@@ -118,6 +118,7 @@ static size_t t;
 // LL(1) parsing with quadruple translation
 node_t *ll1_parsing(token_t *token_list)
 {
+  t = 0;
   stack_t *stack = new_stack(512, sizeof(node_t *));
   stack_t *sem_stack = new_stack(128, sizeof(sem_t));
 
